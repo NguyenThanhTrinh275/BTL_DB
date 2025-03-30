@@ -16,3 +16,11 @@ def signup():
 @app.route('/cart')
 def cart():
     return render_template('cart.html')
+
+@app.route('/payment')
+def payment():
+    return render_template('payment.html')
+
+@app.route('/product')
+def product():
+    return render_template('product.html')

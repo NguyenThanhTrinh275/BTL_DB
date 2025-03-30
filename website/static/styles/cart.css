@@ -36,13 +36,6 @@
     object-fit: cover;
 }
 
-.cart-item-title {
-    max-width: 150px;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    text-overflow: ellipsis;
-    white-space: normal;
-}
 
 .cart-total {
     display: flex;
@@ -51,9 +44,15 @@
     font-size: 18px;
 }
 
+.cart-item-title {
+    max-width: 150px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
 .cart-total-price {
     font-size: 20px;
-    font-weight: bold;
 }
 
 .cart-quantity input {
@@ -76,17 +75,29 @@
     background-color: darkred;
 }
 
-.btn.btn-primary.btn-purchase {
-    background-color: #28a745; 
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+.cart-buttons{
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
 }
 
-.btn.btn-primary.btn-purchase:hover {
-    background-color: #218838;
+.custom-button {
+    padding: 0.75rem 2rem; /* px-8 py-3 */
+    background-color: #2563eb; /* bg-blue-600 */
+    color: white;
+    border-radius: 0.5rem; /* rounded-lg */
+    transition: background-color 0.3s, box-shadow 0.3s; /* transition */
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.custom-button:hover {
+    background-color: #1d4ed8; /* hover:bg-blue-700 */
+}
+
+.custom-button:focus {
+    outline: 2px solid #3b82f6; /* focus:ring-blue-500 with outline */
+    outline-offset: 2px; /* Same effect as focus:ring-offset-2 */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* Simulate a ring with box-shadow */
 }
