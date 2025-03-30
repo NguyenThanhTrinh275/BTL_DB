@@ -1,0 +1,126 @@
+{% extends "base.html" %} {% block title %}Trang Chủ{% endblock %} {% block
+extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %} {% block content %}
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <div class="bg-white shadow-md rounded-lg p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Sản phẩm của bạn</h2>
+                <button class="bg-blue-500 text-white px-4 py-2 rounded">
+                    Thêm Sản Phẩm
+                </button>
+            </div>
+            <table class="w-full text-left">
+                <thead>
+                    <tr>
+                        <th class="pb-2">Sản Phẩm</th>
+                        <th class="pb-2">Mô Tả</th>
+                        <th class="pb-2">Giá</th>
+                        <th class="pb-2">Lựa Chọn Màu Sắc</th>
+                        <th class="pb-2">Size Áo</th>
+                        <th class="pb-2">Số Lượng</th>
+                        <th class="pb-2"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-t">
+                        <td class="py-4 flex items-center">
+                            <img
+                                alt="Product image of Mũi Hàn 500"
+                                class="w-30 h-30 mr-4"
+                                height="50"
+                                src="https://storage.googleapis.com/a1aa/image/99aoy9EM5-lUaY6wU5WaNGD-VKd1cVsinMf8Js82iPA.jpg"
+                                width="50"
+                            />
+                            <div>
+                                <div>Mũi Hàn</div>
+                                <div>500</div>
+                            </div>
+                        </td>
+                        <td class="py-4">Mô tả sản phẩm Mũi Hàn 500</td>
+                        <td class="py-4">25,000 VNĐ</td>
+                        <td class="py-4">
+                            <select class="border border-gray-300 rounded p-1">
+                                <option>Đỏ</option>
+                                <option>Xanh</option>
+                                <option>Vàng</option>
+                            </select>
+                        </td>
+                        <td class="py-4">
+                            <select class="border border-gray-300 rounded p-1">
+                                <option>S</option>
+                                <option>M</option>
+                                <option>L</option>
+                                <option>XL</option>
+                            </select>
+                        </td>
+                        <td class="py-4">
+                            <input
+                                class="w-12 border border-gray-300 rounded p-1 text-center"
+                                type="number"
+                                value="1"
+                            />
+                        </td>
+                        <td class="py-4">
+                            <button
+                                class="bg-red-500 text-white px-2 py-1 rounded"
+                            >
+                                Xóa
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="border-t">
+                        <td class="py-4 flex items-center">
+                            <img
+                                alt="Product image of Máy Bơm Chim Hộ Gia Đình"
+                                class="w-30 h-30 mr-4"
+                                height="50"
+                                src="https://storage.googleapis.com/a1aa/image/f9VzwNO3nixFJsGA2Cvk5gSWq9ZrQh_g1HpM7SWzuBU.jpg"
+                                width="50"
+                            />
+                            <div>
+                                <div>Máy Bơm Chim Hộ</div>
+                                <div>Gia Đình</div>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            Mô tả sản phẩm Máy Bơm Chim Hộ Gia Đình
+                        </td>
+                        <td class="py-4">1,599,000 VNĐ</td>
+                        <td class="py-4">
+                            <select class="border border-gray-300 rounded p-1">
+                                <option>Đỏ</option>
+                                <option>Xanh</option>
+                                <option>Vàng</option>
+                            </select>
+                        </td>
+                        <td class="py-4">
+                            <select class="border border-gray-300 rounded p-1">
+                                <option>S</option>
+                                <option>M</option>
+                                <option>L</option>
+                                <option>XL</option>
+                            </select>
+                        </td>
+                        <td class="py-4">
+                            <input
+                                class="w-12 border border-gray-300 rounded p-1 text-center"
+                                type="number"
+                                value="2"
+                            />
+                        </td>
+                        <td class="py-4">
+                            <button
+                                class="bg-red-500 text-white px-2 py-1 rounded"
+                            >
+                                Xóa
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+{% endblock %}
