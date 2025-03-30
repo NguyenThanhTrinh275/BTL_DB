@@ -10,9 +10,15 @@ body {
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Sora", sans-serif;
     background-color: #f0f2f5;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.contain {
+    flex: 1;
 }
 
 /* Header và Navbar */
@@ -23,6 +29,9 @@ header {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .logo img {
@@ -55,8 +64,8 @@ footer {
     color: white;
     text-align: center;
     padding: 10px 0;
-    position: relative;
-    bottom: 0;
+    /* position: ;
+    bottom: 0; */
     width: 100%;
 }
 

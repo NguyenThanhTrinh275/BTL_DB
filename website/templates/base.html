@@ -9,6 +9,12 @@
             href="{{ url_for('static', filename='styles/base.css') }}"
         />
         {% block extra_css %}{% endblock %}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap"
+            rel="stylesheet"
+        />
     </head>
     <body>
         <!-- Header với logo và navbar -->
@@ -30,16 +36,22 @@
                                 alt="Giỏ hàng"
                         /></a>
                     </li>
-                    <li><a href="#!">Bán Hàng</a></li>
+                    <li>
+                        <a href="{{ url_for('shop_manager') }}">Bán Hàng</a>
+                    </li>
                     <li><a href="{{ url_for('login') }}">Đăng Nhập</a></li>
                     <li><a href="{{ url_for('signup') }}">Đăng Ký</a></li>
                     <li><a href="#!">Đăng xuất</a></li>
-                    <li><a href="#!">Thông tin cá nhân</a></li>
+                    <li>
+                        <a href="{{ url_for('info_user') }}"
+                            >Thông tin cá nhân</a
+                        >
+                    </li>
                 </ul>
             </nav>
         </header>
 
-        <main>{% block content %}{% endblock %}</main>
+        <main class="contain">{% block content %}{% endblock %}</main>
 
         <!-- Footer -->
         <footer>
