@@ -25,3 +25,12 @@ def info_user():
 def shop_manager():
     return render_template('shop_manager.html')
 
+
+@app.route('/payment')
+def payment():
+    return render_template('payment.html')
+
+@app.route('/product')
+def product():
+    return render_template('product.html')
+

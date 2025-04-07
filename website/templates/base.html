@@ -20,10 +20,12 @@
         <!-- Header với logo và navbar -->
         <header>
             <div class="logo">
-                <img
-                    src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1743086606/logoBK.png"
-                    alt="C2C Marketplace Logo"
-                />
+                <a href="{{ url_for('home') }}">
+                    <img
+                        src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1743086606/logoBK.png"
+                        alt="C2C Marketplace Logo"
+                    />
+                </a>
             </div>
 
             <nav>
@@ -40,6 +42,7 @@
                         <a href="{{ url_for('shop_manager') }}">Bán Hàng</a>
                     </li>
                     <li><a href="{{ url_for('login') }}">Đăng Nhập</a></li>
+
                     <li><a href="{{ url_for('signup') }}">Đăng Ký</a></li>
                     <li><a href="#!">Đăng xuất</a></li>
                     <li>
