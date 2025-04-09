@@ -1,36 +1,36 @@
-from flask import render_template
-from website import app
+from flask import Blueprint, render_template
+from .models import Product, ProductVariant
 
-@app.route('/')
+bp = Blueprint('views', __name__)
+
+@bp.route('/')
 def home():
-    return render_template('home.html')
+    products = Product.query.all()  # Lấy tất cả sản phẩm từ bảng PRODUCT
+    return render_template('home.html', products=products)
 
-@app.route('/login')
-def login():
-    return render_template('login.html')
+@bp.route('/product/<int:product_id>')
+def product(product_id):
+    product = Product.query.get_or_404(product_id)  # Lấy sản phẩm theo ProductID
+    variants = ProductVariant.query.filter_by(ProductID=product_id).all()  # Lấy các biến thể
+    return render_template('product.html', product=product, variants=variants)
 
-@app.route('/signup')
-def signup():
-    return render_template('sign_up.html')
+# @app.route('/cart')
+# def cart():
+#     return render_template('cart.html')
 
-@app.route('/cart')
-def cart():
-    return render_template('cart.html')
+# @app.route('/info_user')
+# def info_user():
+#     return render_template('info_user.html')
 
-@app.route('/info_user')
-def info_user():
-    return render_template('info_user.html')
+# @app.route('/shop_manager')
+# def shop_manager():
+#     return render_template('shop_manager.html')
 
-@app.route('/shop_manager')
-def shop_manager():
-    return render_template('shop_manager.html')
+# @app.route('/payment')
+# def payment():
+#     return render_template('payment.html')
 
-
-@app.route('/payment')
-def payment():
-    return render_template('payment.html')
-
-@app.route('/product')
-def product():
-    return render_template('product.html')
+# @app.route('/product')
+# def product():
+#     return render_template('product.html')
 
