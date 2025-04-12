@@ -20,7 +20,7 @@
         <!-- Header với logo và navbar -->
         <header>
             <div class="logo">
-                <a href="{{ url_for('home') }}">
+                <a href="{{ url_for('views.home') }}">
                     <img
                         src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1743086606/logoBK.png"
                         alt="C2C Marketplace Logo"
@@ -30,26 +30,36 @@
 
             <nav>
                 <ul>
-                    <li><a href="{{ url_for('home') }}">Trang Chủ</a></li>
+                    <li><a href="{{ url_for('views.home') }}">Trang Chủ</a></li>
+                    {% if session.user_id %}
                     <li>
-                        <a href="{{ url_for('cart') }}"
-                            ><img
-                                src="../static/images/cart.png"
+                        <a href="{{ url_for('views.cart') }}">
+                            <img
+                                src="{{ url_for('static', filename='images/cart.png') }}"
                                 alt="Giỏ hàng"
-                        /></a>
+                            />
+                        </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('shop_manager') }}">Bán Hàng</a>
+                        <a href="{{ url_for('views.shop_manager') }}">
+                            Bán Hàng
+                        </a>
                     </li>
-                    <li><a href="{{ url_for('login') }}">Đăng Nhập</a></li>
+                    <li>
+                        <a href="{{ url_for('views.info_user') }}">
+                            Thông tin cá nhân
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('auth.logout') }}">Đăng xuất</a>
+                    </li>
+                    {% else %}
+                    <li><a href="{{ url_for('auth.login') }}">Đăng Nhập</a></li>
 
-                    <li><a href="{{ url_for('signup') }}">Đăng Ký</a></li>
-                    <li><a href="#!">Đăng xuất</a></li>
                     <li>
-                        <a href="{{ url_for('info_user') }}"
-                            >Thông tin cá nhân</a
-                        >
+                        <a href="{{ url_for('auth.register') }}">Đăng Ký</a>
                     </li>
+                    {% endif %}
                 </ul>
             </nav>
         </header>

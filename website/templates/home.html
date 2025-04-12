@@ -12,114 +12,14 @@ extra_css %}
 
 <section class="products">
     <div class="product-list">
+        {% for product in products %}
         <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
+            <img src="../static/images/siunhan.jpg" alt="" />
+            <h3>{{ product.name }}</h3>
+            <p>Giá: {{ product.price }} VNĐ</p>
             <a href="product" class="buy-button">Xem Chi Tiết</a>
         </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
-        <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="Sản phẩm 1" />
-            <h3>Áo Thun Cũ</h3>
-            <p>Giá: 50.000 VNĐ</p>
-            <a href="#" class="buy-button">Xem Chi Tiết</a>
-        </div>
+        {% endfor %}
     </div>
 </section>
 {% endblock %}

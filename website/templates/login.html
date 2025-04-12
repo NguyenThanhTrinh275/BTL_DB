@@ -11,11 +11,28 @@
             href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap"
             rel="stylesheet"
         />
+        <style>
+            .custom-alert {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #f44336;
+                color: white;
+                padding: 15px;
+                border-radius: 5px;
+                z-index: 1000;
+                display: none;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+            .custom-alert.show {
+                display: block;
+            }
+        </style>
     </head>
     <body>
         <div class="login-container">
             <h2>Đăng Nhập</h2>
-            <form>
+            <form action="{{ url_for('auth.login') }}" method="POST">
                 <div class="form-group">
                     <label for="username">Email của bạn</label>
                     <input
@@ -38,9 +55,43 @@
                 </div>
                 <button type="submit" class="login-button">Đăng Nhập</button>
                 <div class="login-link">
-                    <p>Chưa có tài khoản? <a href="sign_up.html">Đăng kí</a></p>
+                    <p>
+                        Chưa có tài khoản?
+                        <a href="{{ url_for('auth.register') }}">Đăng kí</a>
+                    </p>
                 </div>
             </form>
         </div>
+        <script>
+            function showCustomAlert(message) {
+                let alertDiv = document.querySelector('.custom-alert');
+                if (!alertDiv) {
+                    alertDiv = document.createElement('div');
+                    alertDiv.className = 'custom-alert';
+                    document.body.appendChild(alertDiv);
+                }
+                alertDiv.textContent = message;
+                alertDiv.classList.add('show');
+                setTimeout(() => {
+                    alertDiv.classList.remove('show');
+                }, 3000);
+            }
+
+            const messages = [
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {category: '{{ category }}', message: '{{ message }}'},
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            ];
+
+            messages.forEach(msg => {
+                if (msg.category === 'error') {
+                    showCustomAlert(msg.message);
+                }
+            });
+        </script>
     </body>
 </html>
