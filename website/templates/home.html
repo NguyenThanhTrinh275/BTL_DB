@@ -10,16 +10,100 @@ extra_css %}
 <!-- Banner chính -->
 <section class="banner"></section>
 
-<section class="products">
+<!-- <section class="products">
     <div class="product-list">
         {% for product in products %}
         <div class="product-item">
-            <img src="../static/images/siunhan.jpg" alt="" />
+            <img
+                src="{{ product.image or url_for('static', filename='images/default.jpg') }}"
+                alt="{{ product.name }}"
+            />
             <h3>{{ product.name }}</h3>
             <p>Giá: {{ product.price }} VNĐ</p>
-            <a href="product" class="buy-button">Xem Chi Tiết</a>
+            <a
+                href="{{ url_for('views.product_detail', product_id=product.id) }}"
+                class="buy-button"
+            >
+                Xem Chi Tiết
+            </a>
         </div>
         {% endfor %}
     </div>
-</section>
+</section> -->
+<div class="container">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="mb-4">
+                <h2>Loại sản phẩm</h2>
+                <ul>
+                    <li>
+                        <input id="Ao" type="checkbox" />
+                        <label for="Ao"> Áo </label>
+                    </li>
+                    <li>
+                        <input id="Quan" type="checkbox" />
+                        <label for="Quan"> Quần </label>
+                    </li>
+                    <li>
+                        <input id="phukien" type="checkbox" />
+                        <label for="phukien"> Phụ kiện khác </label>
+                    </li>
+                </ul>
+            </div>
+            <div class="mb-4">
+                <h2>Cửa hàng</h2>
+                <ul>
+                    <li>
+                        <input id="dell" type="checkbox" />
+                        <label for="dell"> Dell </label>
+                    </li>
+                    <li>
+                        <input id="northbayou" type="checkbox" />
+                        <label for="northbayou"> North Bayou </label>
+                    </li>
+                    <li>
+                        <input id="lenovo" type="checkbox" />
+                        <label for="lenovo"> Lenovo </label>
+                    </li>
+                    <li>
+                        <input id="oem" type="checkbox" />
+                        <label for="oem"> OEM </label>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mb-4">
+                <button class="mt-2 bg-orange-500 text-white py-2 px-4 rounded">
+                    ÁP DỤNG
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="grid">
+                <!-- Product Card -->
+                {% for product in products %}
+                <div class="product-card">
+                    <a
+                        href="{{ url_for('views.product_detail', product_id=product.id) }}"
+                    >
+                        <img
+                            alt="{{ product.name }}"
+                            src="{{ url_for('static', filename='images/default.png') or product.image }}"
+                        />
+                        <div class="mt-2">
+                            <h3>{{ product.name }}</h3>
+                            <p class="price">{{ product.price }} VNĐ</p>
+                            <p class="rating">5.0 ⭐</p>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

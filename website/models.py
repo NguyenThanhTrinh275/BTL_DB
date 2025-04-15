@@ -111,24 +111,48 @@ def get_products():
         return []
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM product")
+        cur.execute("""
+            SELECT DISTINCT ON (p.ProductID)
+                p.ProductID AS productid,
+                p.Description AS name,
+                pv.Price AS price,
+                (SELECT pi.Images 
+                 FROM PRODUCT_IMAGES pi 
+                 WHERE pi.ProductID = p.ProductID 
+                 LIMIT 1) AS image
+            FROM PRODUCT p
+            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
+            WHERE pv.StockQuantity > 0  
+            ORDER BY p.ProductID, pv.ProductID
+        """)
         products = cur.fetchall()
-        return products
+        return [
+            {
+                'id': product['productid'],
+                'name': product['name'],
+                'price': product['price'],
+                'image': product['image']
+            }
+            for product in products
+        ]
+    except Exception as e:
+        print(f"Error fetching products: {e}")
+        return []
     finally:
         close_db_connection(conn, cur)
 
 # Hàm lấy sản phẩm theo ID (đã có từ trước, giữ nguyên)
-# def get_product_by_id(product_id):
-#     conn = get_db_connection()
-#     if not conn:
-#         return None
-#     try:
-#         cur = conn.cursor()
-#         cur.execute("SELECT * FROM product WHERE product_id = %s", (product_id,))
-#         product = cur.fetchone()
-#         return product
-#     finally:
-#         close_db_connection(conn, cur)
+def get_product_by_id(product_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM product WHERE product_id = %s", (product_id,))
+        product = cur.fetchone()
+        return product
+    finally:
+        close_db_connection(conn, cur)
 
 # # Hàm tạo đơn hàng (đã có từ trước, giữ nguyên)
 # def create_order(user_id):

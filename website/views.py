@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from website.models import get_products
-# , get_product_by_id, create_order, add_order_detail
+from website.models import get_products, get_product_by_id
+# create_order, add_order_detail
 
 views = Blueprint('views', __name__)
 
@@ -9,13 +9,13 @@ def home():
     products = get_products()
     return render_template('home.html', products=products)
 
-# @views.route('/product/<int:product_id>')
-# def product_detail(product_id):
-#     product = get_product_by_id(product_id)
-#     if not product:
-#         flash('Product not found', 'error')
-#         return redirect(url_for('views.home'))
-#     return render_template('product.html', product=product)
+@views.route('/product/<int:product_id>')
+def product_detail(product_id):
+    product = get_product_by_id(product_id)
+    if not product:
+        flash('Product not found', 'error')
+        return redirect(url_for('views.home'))
+    return render_template('product.html', product=product)
 
 # @views.route('/cart/add/<int:product_id>', methods=['POST'])
 # def add_to_cart(product_id):
@@ -69,8 +69,4 @@ def shop_manager():
 # Thêm route cho thông tin cá nhân
 @views.route('/info_user')
 def info_user():
-    # if 'user_id' not in session:
-    #     flash('Vui lòng đăng nhập để xem thông tin cá nhân', 'error')
-    #     return redirect(url_for('auth.login'))
-    # Logic hiển thị thông tin cá nhân sẽ được thêm sau
     return render_template('info_user.html')
