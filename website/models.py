@@ -148,8 +148,8 @@ def get_product_by_id(product_id):
         return None
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM product WHERE product_id = %s", (product_id,))
-        product = cur.fetchone()
+        cur.execute("SELECT * FROM PRODUCT_VARIANT WHERE ProductID = %s", (product_id,))
+        product = cur.fetchall()
         return product
     finally:
         close_db_connection(conn, cur)

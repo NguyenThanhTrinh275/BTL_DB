@@ -1,7 +1,7 @@
 /* Banner */
 .banner {
     background: url("../images/banner.jpg") no-repeat center center/cover;
-    height: 700px;
+    height: 500px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -11,7 +11,7 @@
 }
 
 .container {
-    max-width: 1700px;
+    max-width: 1400px;
     margin: 60px auto;
     padding: 16px;
 }
