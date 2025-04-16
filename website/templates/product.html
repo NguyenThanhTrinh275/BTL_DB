@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block title %}Tên sản phẩm{% endblock %} {% block
-extra_css %}
+{% extends "base.html" %} {% block title %}{{ product.name }}{% endblock %} {%
+block extra_css %}
 <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -21,75 +21,73 @@ extra_css %}
     <main class="main">
         <!-- Product Display Section -->
         <section class="product-section">
-            <!-- Product Images -->
             <div class="product-images">
-                <!-- Main Image -->
                 <div class="main-image-container">
                     <img
-                        src="{{ url_for('static', filename='images/default.png') }}"
-                        alt="Wireless Headphones"
+                        src="{{ url_for('static', filename='images/default.png') or product.images[0] }}"
+                        alt="{{ product.name }}"
                         class="main-image"
+                        id="main-image"
                     />
                 </div>
-                <!-- Thumbnails -->
                 <div class="thumbnails">
+                    {% for image in product.images %}
                     <img
-                        src="{{ url_for('static', filename='images/default.png') }}"
-                        alt="Headphones Front View"
+                        src="{{ url_for('static', filename='images/default.png') or image }}"
+                        alt="{{ product.name }} View"
                         class="thumbnail"
                     />
-                    <img
-                        src="{{ url_for('static', filename='images/default.png') }}"
-                        alt="Headphones Side View"
-                        class="thumbnail"
-                    />
-                    <img
-                        src="{{ url_for('static', filename='images/default.png') }}"
-                        alt="Headphones Detail"
-                        class="thumbnail"
-                    />
+                    {% endfor %}
                 </div>
             </div>
 
             <!-- Product Info -->
             <div class="product-info">
-                <h2 class="product-title">Áo thun thể thao</h2>
-                <p class="product-category">Phân loại: Áo</p>
+                <h2 class="product-title">{{ product.name }}</h2>
 
                 <!-- Price Section -->
                 <div class="price-section">
                     <div class="price-container">
-                        <span class="price">99.000 VNĐ</span>
+                        <span class="price" id="product-price"> ♾️ VNĐ </span>
                     </div>
                 </div>
 
-                <!-- Size Selection -->
-                <div class="size-selection">
-                    <h3 class="size-title">Chọn màu sắc và size:</h3>
-                    <div class="size-buttons">
-                        <button class="size-btn">Trắng, XXS</button>
-                        <button class="size-btn">Xanh lá cây, S</button>
-                        <button class="size-btn">Xanh dương, M</button>
-                        <button class="size-btn">Đỏ, L</button>
-                        <button class="size-btn">Tím, XL</button>
-                        <button class="size-btn">Hồng, XXL</button>
+                <!-- Variant Selection -->
+                <div class="choice-selection">
+                    <h3 class="choice-title">Chọn màu sắc và size:</h3>
+                    <div class="choice-buttons">
+                        {% for variant in product.variants %}
+                        <button
+                            class="choice-btn"
+                            data-choice="{{ variant.choice }}"
+                            data-price="{{ variant.price }}"
+                            data-stock="{{ variant.stock }}"
+                        >
+                            {{ variant.choice }}
+                        </button>
+                        {% endfor %}
                     </div>
                 </div>
 
-                <div class="stock-info">
+                <div class="stock-info" id="stock-info">
                     <i class="fas fa-check-circle stock-icon"></i>
-                    <span class="stock-text">Còn trong kho :</span> 42 sản phẩm
+                    <span class="stock-text">Còn trong kho: </span>
+                    <span id="stock-quantity">♾️</span>
+                    sản phẩm
                 </div>
+                <!-- {{ product.variants[0].stock }} -->
 
                 <!-- Quantity Selector -->
                 <div class="quantity-selection">
                     <h3 class="quantity-title">Số lượng</h3>
                     <div class="quantity-selector">
-                        <button class="quantity-btn minus-btn">
+                        <button type="button" class="quantity-btn minus-btn">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <span class="quantity-value">1</span>
-                        <button class="quantity-btn plus-btn">
+                        <span class="quantity-value" id="quantity-value"
+                            >1</span
+                        >
+                        <button type="button" class="quantity-btn plus-btn">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
@@ -97,34 +95,125 @@ extra_css %}
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button class="add-to-cart-btn">
-                        <i class="fas fa-shopping-cart cart-icon"></i> Thêm vào
-                        giỏ hàng
-                    </button>
+                    <form
+                        id="add-to-cart-form"
+                        method="POST"
+                        action="{{ url_for('views.add_to_cart', product_id=product.id) }}"
+                    >
+                        <input
+                            type="hidden"
+                            name="choice"
+                            id="choice"
+                            value="{{ product.variants[0].choice }}"
+                        />
+                        <input
+                            type="hidden"
+                            name="quantity"
+                            id="form-quantity"
+                            value="1"
+                        />
+                        <button type="submit" class="add-to-cart-btn">
+                            <i class="fas fa-shopping-cart cart-icon"></i> Thêm
+                            vào giỏ hàng
+                        </button>
+                    </form>
                 </div>
             </div>
         </section>
     </main>
 
     <script>
-        // Simple image gallery functionality
+        // Image gallery functionality
         document.querySelectorAll(".thumbnail").forEach((img) => {
             img.addEventListener("click", () => {
-                const mainImg = document.querySelector(".main-image");
+                const mainImg = document.querySelector("#main-image");
                 mainImg.src = img.src;
                 mainImg.alt = img.alt;
             });
         });
 
-        // Size selection
-        document.querySelectorAll(".size-btn").forEach((btn) => {
+        // Variant selection
+        const selectedVariant = {
+            choice: "",
+            price: null,
+            stock: null,
+        };
+
+        document.querySelectorAll(".choice-btn").forEach((btn) => {
             btn.addEventListener("click", () => {
-                document.querySelectorAll(".size-btn").forEach((b) => {
-                    b.classList.remove("selected");
-                });
+                // Cập nhật kiểu được chọn
+                document
+                    .querySelectorAll(".choice-btn")
+                    .forEach((b) => b.classList.remove("selected"));
                 btn.classList.add("selected");
+
+                // Cập nhật giá và tồn kho
+                const price = parseFloat(btn.dataset.price);
+                const stock = parseInt(btn.dataset.stock);
+                document.querySelector("#product-price").textContent = isNaN(
+                    price
+                )
+                    ? "♾️"
+                    : price.toLocaleString("vi-VN") + " VNĐ";
+                document.querySelector("#stock-quantity").textContent = isNaN(
+                    stock
+                )
+                    ? "♾️"
+                    : stock;
+
+                // Cập nhật selectedVariant và form input
+                selectedVariant.choice = btn.dataset.choice || "";
+                selectedVariant.price = isNaN(price) ? null : price;
+                selectedVariant.stock = isNaN(stock) ? null : stock;
+
+                document.querySelector("#selected-choice").value =
+                    selectedVariant.choice;
+
+                // Reset số lượng về 1 và kiểm tra tồn kho
+                document.querySelector("#quantity-value").textContent = "1";
+                document.querySelector("#form-quantity").value = "1";
+                document.querySelector("#add-to-cart-form button").disabled =
+                    !selectedVariant.choice || selectedVariant.stock === 0;
             });
         });
+
+        // Quantity selector
+        const quantityValue = document.querySelector("#quantity-value");
+        const formQuantity = document.querySelector("#form-quantity");
+        const minusBtn = document.querySelector(".minus-btn");
+        const plusBtn = document.querySelector(".plus-btn");
+
+        minusBtn.addEventListener("click", () => {
+            let quantity = parseInt(quantityValue.textContent);
+            if (quantity > 1) {
+                quantity--;
+                quantityValue.textContent = quantity;
+                formQuantity.value = quantity;
+            }
+        });
+
+        plusBtn.addEventListener("click", () => {
+            let quantity = parseInt(quantityValue.textContent);
+            if (!selectedVariant.stock || quantity < selectedVariant.stock) {
+                quantity++;
+                quantityValue.textContent = quantity;
+                formQuantity.value = quantity;
+            } else {
+                alert("Số lượng không thể vượt quá hàng tồn kho!");
+            }
+        });
+
+        // Cập nhật số lượng trong form khi submit
+        document
+            .querySelector("#add-to-cart-form")
+            .addEventListener("submit", (e) => {
+                if (!selectedVariant.choice) {
+                    e.preventDefault();
+                    alert("Vui lòng chọn một biến thể sản phẩm!");
+                } else {
+                    formQuantity.value = quantityValue.textContent;
+                }
+            });
     </script>
 </body>
 {% endblock %}

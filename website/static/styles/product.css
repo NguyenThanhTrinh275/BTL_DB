@@ -113,11 +113,6 @@ General Body Styles .body {
     color: #1f2937;
 }
 
-.product-category {
-    color: #6b7280;
-    margin-bottom: 1rem;
-}
-
 /* Price Section */
 .price-section {
     background-color: #f9fafb;
@@ -154,24 +149,24 @@ General Body Styles .body {
 }
 
 /* Size Selection */
-.size-selection {
+.choice-selection {
     margin-bottom: 1.5rem;
 }
 
-.size-title {
+.choice-title {
     font-size: 0.875rem;
     font-weight: medium;
     margin-bottom: 0.75rem;
     color: #374151;
 }
 
-.size-buttons {
+.choice-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
 }
 
-.size-btn {
+.choice-btn {
     padding: 0.5rem 1rem;
     border: 1px solid #d1d5db;
     border-radius: 0.25rem;
@@ -179,11 +174,11 @@ General Body Styles .body {
     cursor: pointer;
 }
 
-.size-btn:hover {
+.choice-btn:hover {
     background-color: #f9fafb;
 }
 
-.size-btn.selected {
+.choice-btn.selected {
     background-color: #e0f2fe;
     border-color: #3b82f6;
 }
