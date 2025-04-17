@@ -291,7 +291,8 @@ def get_cart(user_id):
                 cc.Color,
                 cc."Size" AS size,
                 cc.Quantity,
-                cc.TotalMoney
+                cc.TotalMoney,
+                pv.Price AS price
             FROM CART_CONTAIN_PRODUCT_VARIANT cc
             JOIN PRODUCT p ON cc.ProductID = p.ProductID
             JOIN PRODUCT_VARIANT pv ON cc.ProductID = pv.ProductID AND cc.Color = pv.Color AND cc."Size" = pv."Size"
@@ -308,7 +309,8 @@ def get_cart(user_id):
                 'total_money': item['totalmoney'],
                 'quantity': item['quantity'],
                 'image': item['image'],
-                'cart_id': item['cartid']
+                'cart_id': item['cartid'],
+                'price': item['price']
             }
             for item in items
         ]
@@ -500,8 +502,69 @@ def set_default_address(user_id, home_number, street, district, city, province):
     finally:
         close_db_connection(conn, cur)
 
+# Hàm tạo order
+def create_order(user_id, cart_id, payment_method, total_money, total_products, home_number, street, district, city, province):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO "ORDER" (
+                OrderDate, Status, PaymentMethod, TotalMoney, TotalProduct,
+                HomeNumber, Street, District, City, Province, Subtotal, Promotion, CartID
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING OrderID
+            """,
+            (
+                'NOW()',  # OrderDate
+                'Pending',  # Status
+                payment_method,
+                total_money,
+                total_products,
+                home_number,
+                street,
+                district,
+                city,
+                province,
+                total_money,  # Subtotal
+                0.00,  # Promotion
+                cart_id
+            )
+        )
+        order_id = cur.fetchone()['orderid']
+        conn.commit()
+        return order_id
+    except Exception as e:
+        print(f"Error creating order: {e}")
+        conn.rollback()
+        return None
+    finally:
+        close_db_connection(conn, cur)
 
-
+def add_order_detail(order_id, product_id, color, size, quantity, total_money):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO ORDER_CONTAIN_PRODUCT_VARIANT (OrderID, ProductID, Color, "Size", Quantity)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (order_id, product_id, color, size, quantity)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error adding order detail: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
 
 
 

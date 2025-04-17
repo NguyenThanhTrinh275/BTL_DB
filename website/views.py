@@ -11,84 +11,6 @@ def home():
     
     return render_template('home.html', products=products)
 
-# Thêm route cho việc truy cập trang sản phẩm
-@views.route('/product/<int:product_id>')
-def product_detail(product_id):
-    print(f"Fetching product with ID: {product_id}")  # Debug
-    product = get_product_by_id(product_id)
-    print(f"Product data: {product}")  # Debug
-    if not product:
-        return redirect(url_for('views.home'))
-    return render_template('product.html', product=product)
-
-# Thêm route cho việc truy cập giỏ hàng
-@views.route('/cart')
-def cart():
-    if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để xem giỏ hàng', 'error')
-        return redirect(url_for('auth.login'))
-    cart_items = get_cart(session['user_id'])
-    total_money = sum(Decimal(str(item['total_money'])) for item in cart_items)
-    total_products = sum(item['quantity'] for item in cart_items)
-    return render_template('cart.html', cart_items=cart_items, total_money=total_money, total_products=total_products)
-
-# Thêm route cho việc thêm sản phẩm vào giỏ hàng
-@views.route('/cart/add/<int:product_id>', methods=['POST'])
-def add_to_cart(product_id):
-    if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'error')
-        return redirect(url_for('auth.login'))
-
-    product = get_product_by_id(product_id)
-    if not product:
-        flash('Sản phẩm không tồn tại', 'error')
-        return redirect(url_for('views.home'))
-
-    # Get form data
-    choice = request.form.get('choice')
-    quantity = int(request.form.get('quantity', 1))
-    price = Decimal(request.form.get('price', '0.00'))
-
-    # Find the selected variant
-    selected_variant = next((v for v in product['variants'] if v['choice'] == choice), None)
-    if not selected_variant:
-        flash('Biến thể sản phẩm không hợp lệ', 'error')
-        return redirect(url_for('views.product_detail', product_id=product_id))
-
-    # Check stock
-    if quantity > selected_variant['stock']:
-        flash('Số lượng vượt quá hàng tồn kho', 'error')
-        return redirect(url_for('views.product_detail', product_id=product_id))
-
-    # Add to cart
-    success = add_to_cart_func(session['user_id'], product_id, choice, quantity, price)
-    if success:
-        flash('Đã thêm sản phẩm vào giỏ hàng', 'success')
-    else:
-        flash('Không thể thêm sản phẩm vào giỏ hàng', 'error')
-
-    return redirect(url_for('views.product_detail', product_id=product_id))
-
-# Thêm route cho việc xoá sản phẩm khỏi giỏ hàng
-@views.route('/cart/delete', methods=['POST'])
-def delete_from_cart():
-    if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng', 'error')
-        return redirect(url_for('auth.login'))
-
-    product_id = int(request.form.get('product_id'))
-    color = request.form.get('color')
-    size = request.form.get('size')
-    cart_id = int(request.form.get('cart_id'))
-
-    success = delete_from_cart_func(cart_id, product_id, color, size)
-    if success:
-        flash('Đã xóa sản phẩm khỏi giỏ hàng', 'success')
-    else:
-        flash('Không thể xóa sản phẩm khỏi giỏ hàng', 'error')
-
-    return redirect(url_for('views.cart'))
-
 # Thêm route cho thông tin cá nhân
 @views.route('/info_user')
 def info_user():
@@ -195,6 +117,175 @@ def set_default():
         flash('Thiết lập địa chỉ mặc định thất bại', 'error')
     return redirect(url_for('views.info_user'))
 
+# Thêm route cho việc truy cập trang sản phẩm
+@views.route('/product/<int:product_id>')
+def product_detail(product_id):
+    print(f"Fetching product with ID: {product_id}")  # Debug
+    product = get_product_by_id(product_id)
+    print(f"Product data: {product}")  # Debug
+    if not product:
+        return redirect(url_for('views.home'))
+    return render_template('product.html', product=product)
+
+# Thêm route cho việc truy cập giỏ hàng
+@views.route('/cart', methods=['GET', 'POST'])
+def cart():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để xem giỏ hàng', 'error')
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST' and request.form.get('action') == 'place_order':
+        cart_items = get_cart(session['user_id'])
+        if not cart_items:
+            flash('Giỏ hàng trống, không thể đặt hàng', 'error')
+            return redirect(url_for('views.cart'))
+        return redirect(url_for('views.payment'))
+    
+    cart_items = get_cart(session['user_id'])
+    total_money = sum(Decimal(str(item['total_money'])) for item in cart_items)
+    total_products = sum(item['quantity'] for item in cart_items)
+    return render_template('cart.html', cart_items=cart_items, total_money=total_money, total_products=total_products)
+
+# Thêm route cho việc thêm sản phẩm vào giỏ hàng
+@views.route('/cart/add/<int:product_id>', methods=['POST'])
+def add_to_cart(product_id):
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'error')
+        return redirect(url_for('auth.login'))
+
+    product = get_product_by_id(product_id)
+    if not product:
+        flash('Sản phẩm không tồn tại', 'error')
+        return redirect(url_for('views.home'))
+
+    # Get form data
+    choice = request.form.get('choice')
+    quantity = int(request.form.get('quantity', 1))
+    price = Decimal(request.form.get('price', '0.00'))
+
+    # Find the selected variant
+    selected_variant = next((v for v in product['variants'] if v['choice'] == choice), None)
+    if not selected_variant:
+        flash('Biến thể sản phẩm không hợp lệ', 'error')
+        return redirect(url_for('views.product_detail', product_id=product_id))
+
+    # Check stock
+    if quantity > selected_variant['stock']:
+        flash('Số lượng vượt quá hàng tồn kho', 'error')
+        return redirect(url_for('views.product_detail', product_id=product_id))
+
+    # Add to cart
+    success = add_to_cart_func(session['user_id'], product_id, choice, quantity, price)
+    if success:
+        flash('Đã thêm sản phẩm vào giỏ hàng', 'success')
+    else:
+        flash('Không thể thêm sản phẩm vào giỏ hàng', 'error')
+
+    return redirect(url_for('views.product_detail', product_id=product_id))
+
+# Thêm route cho việc xoá sản phẩm khỏi giỏ hàng
+@views.route('/cart/delete', methods=['POST'])
+def delete_from_cart():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng', 'error')
+        return redirect(url_for('auth.login'))
+
+    product_id = int(request.form.get('product_id'))
+    color = request.form.get('color')
+    size = request.form.get('size')
+    cart_id = int(request.form.get('cart_id'))
+
+    success = delete_from_cart_func(cart_id, product_id, color, size)
+    if success:
+        flash('Đã xóa sản phẩm khỏi giỏ hàng', 'success')
+    else:
+        flash('Không thể xóa sản phẩm khỏi giỏ hàng', 'error')
+
+    return redirect(url_for('views.cart'))
+
+# Thêm route cho việc thanh toán
+@views.route('/payment', methods=['GET', 'POST'])
+def payment():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để thanh toán', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # Lấy thông tin người dùng
+    user_info = get_user_info(session['user_id'])
+    if not user_info:
+        flash('Không thể lấy thông tin người dùng', 'error')
+        return redirect(url_for('views.cart'))
+    
+    # Lấy địa chỉ mặc định
+    addresses = get_user_addresses(session['user_id'])
+    default_address = next((addr for addr in addresses if addr['is_default']), None)
+    
+    # Lấy giỏ hàng
+    cart_items = get_cart(session['user_id'])
+    if not cart_items:
+        flash('Giỏ hàng trống, không thể thanh toán', 'error')
+        return redirect(url_for('views.cart'))
+    
+    total_money = sum(Decimal(str(item['total_money'])) for item in cart_items)
+    total_products = sum(item['quantity'] for item in cart_items)
+    
+    if request.method == 'POST':
+        # Xử lý thanh toán
+        payment_method = request.form.get('payment')
+        if not payment_method:
+            flash('Vui lòng chọn phương thức thanh toán', 'error')
+            return redirect(url_for('views.payment'))
+        
+        # Tạo đơn hàng
+        order_id = create_order(
+            user_id=session['user_id'],
+            cart_id=cart_items[0]['cart_id'],
+            payment_method=payment_method,
+            total_money=total_money,
+            total_products=total_products,
+            home_number=default_address['home_number'] if default_address else None,
+            street=default_address['street'] if default_address else None,
+            district=default_address['district'] if default_address else None,
+            city=default_address['city'] if default_address else None,
+            province=default_address['province'] if default_address else None
+        )
+        
+        if order_id:
+            # Thêm chi tiết đơn hàng
+            for item in cart_items:
+                success = add_order_detail(
+                    order_id=order_id,
+                    product_id=item['product_id'],
+                    color=item['color'],
+                    size=item['size'],
+                    quantity=item['quantity'],
+                    total_money=item['total_money']
+                )
+                if not success:
+                    flash('Lỗi khi thêm chi tiết đơn hàng', 'error')
+                    return redirect(url_for('views.payment'))
+                
+                # Xóa sản phẩm khỏi giỏ hàng
+                delete_from_cart_func(
+                    cart_id=item['cart_id'],
+                    product_id=item['product_id'],
+                    color=item['color'],
+                    size=item['size']
+                )
+            
+            flash('Đặt hàng thành công!', 'success')
+            return redirect(url_for('views.home'))
+        else:
+            flash('Lỗi khi tạo đơn hàng', 'error')
+    
+    return render_template(
+        'payment.html',
+        user_info=user_info,
+        default_address=default_address,
+        cart_items=cart_items,
+        total_money=total_money,
+        total_products=total_products
+    )
 
 
 
@@ -208,3 +299,4 @@ def shop_manager():
     #     return redirect(url_for('auth.login'))
     # Logic quản lý cửa hàng sẽ được thêm sau
     return render_template('shop_manager.html')
+

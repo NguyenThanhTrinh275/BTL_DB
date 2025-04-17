@@ -93,3 +93,7 @@ tr.border-t {
     font-size: 1.125rem;
     font-weight: 600;
 }
+
+.total .button-blue {
+    margin-right: 50px;
+}

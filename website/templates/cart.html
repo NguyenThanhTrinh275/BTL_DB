@@ -22,7 +22,7 @@ extra_css %}
                 <th>Màu sắc</th>
                 <th>Số Lượng</th>
                 <th>Tổng tiền</th>
-                <th>Hành Động</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -31,7 +31,7 @@ extra_css %}
                 <td class="product-info">
                     <img
                         src="{{ url_for('static', filename='images/default.png') or item.image }}"
-                        alt="Image of Mũi Hàn 500"
+                        alt="{{ item.name }}"
                     />
                     <div>
                         <div>{{ item.name }}</div>
@@ -79,7 +79,10 @@ extra_css %}
             "{:,.0f}".format(total_money) }} VNĐ
         </div>
         {% if total_products > 0 %}
-        <button class="button-blue">Đặt hàng</button>
+        <form method="POST" action="{{ url_for('views.cart') }}">
+            <input type="hidden" name="action" value="place_order" />
+            <button type="submit" class="button-blue">Đặt hàng</button>
+        </form>
         {% endif %}
     </div>
 </div>
