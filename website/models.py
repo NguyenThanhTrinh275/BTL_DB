@@ -509,29 +509,29 @@ def create_order(user_id, cart_id, payment_method, total_money, total_products, 
         return None
     try:
         cur = conn.cursor()
+        total_price = total_money + 30000
         cur.execute(
             """
             INSERT INTO "ORDER" (
-                OrderDate, Status, PaymentMethod, TotalMoney, TotalProduct,
-                HomeNumber, Street, District, City, Province, Subtotal, Promotion, CartID
+                PaymentMethod, TotalMoney, TotalProduct,
+                HomeNumber, Street, District, City, Province, Subtotal, CartID, ShipByID, Status
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING OrderID
             """,
             (
-                'NOW()',  # OrderDate
-                'Pending',  # Status
                 payment_method,
-                total_money,
+                total_price,
                 total_products,
                 home_number,
                 street,
                 district,
                 city,
                 province,
-                total_money,  # Subtotal
-                0.00,  # Promotion
-                cart_id
+                total_money,
+                cart_id,
+                11,
+                'Pending'
             )
         )
         order_id = cur.fetchone()['orderid']
@@ -567,41 +567,85 @@ def add_order_detail(order_id, product_id, color, size, quantity, total_money):
         close_db_connection(conn, cur)
 
 
+def update_vendee_spending(user_id, amount):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE VENDEE_AND_CART
+            SET TotalSpending = TotalSpending + %s
+            WHERE UserID = %s
+        """, (float(amount), user_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating vendee spending: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
+
+    
+def update_vender_income(vender_id, amount):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE VENDER
+            SET Income = COALESCE(Income, 0) + %s
+            WHERE UserID = %s
+        """, (float(amount), vender_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating vender income: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
 
 
+def update_product_stock(product_id, color, size, quantity):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE PRODUCT_VARIANT
+            SET StockQuantity = StockQuantity - %s
+            WHERE ProductID = %s AND Color = %s AND "Size" = %s
+        """, (quantity, product_id, color, size))
+        conn.commit()
+        return cur.rowcount > 0
+    except Exception as e:
+        print(f"Error updating product stock: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
 
-
-# # Hàm tạo đơn hàng (đã có từ trước, giữ nguyên)
-# def create_order(user_id):
-#     conn = get_db_connection()
-#     if not conn:
-#         return None
-#     try:
-#         cur = conn.cursor()
-#         cur.execute("CALL create_order(%s, NULL)", (user_id,))
-#         conn.commit()
-#         cur.execute("SELECT currval(pg_get_serial_sequence('orders', 'order_id'))")
-#         order_id = cur.fetchone()['currval']
-#         return order_id
-#     finally:
-#         close_db_connection(conn, cur)
-
-# # Hàm thêm chi tiết đơn hàng (đã có từ trước, giữ nguyên)
-# def add_order_detail(order_id, product_id, quantity, unit_price):
-#     conn = get_db_connection()
-#     if not conn:
-#         return False
-#     try:
-#         cur = conn.cursor()
-#         cur.execute(
-#             "INSERT INTO order_details (order_id, product_id, quantity, unit_price) VALUES (%s, %s, %s, %s)",
-#             (order_id, product_id, quantity, unit_price)
-#         )
-#         conn.commit()
-#         return True
-#     except Exception as e:
-#         print(f"Error adding order detail: {e}")
-#         conn.rollback()
-#         return False
-#     finally:
-#         close_db_connection(conn, cur)
+def get_vender_id_by_product(product_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT v.UserID
+            FROM VENDER v
+            JOIN SHOP s ON v.UserID = s.UserID
+            JOIN PRODUCT p ON s.ShopID = p.ShopID
+            WHERE p.ProductID = %s
+        """, (product_id,))
+        vender = cur.fetchone()
+        return vender['userid'] if vender else None
+    except Exception as e:
+        print(f"Error fetching vender ID: {e}")
+        return None
+    finally:
+        close_db_connection(conn, cur)

@@ -115,6 +115,7 @@ block extra_css %}
                         <input
                             type="hidden"
                             name="price"
+                            id="form-price"
                             value="{{ product.variants[0].price }}"
                         />
                         <button type="submit" class="add-to-cart-btn">
@@ -171,8 +172,10 @@ block extra_css %}
                 selectedVariant.price = isNaN(price) ? null : price;
                 selectedVariant.stock = isNaN(stock) ? null : stock;
 
-                document.querySelector("#selected-choice").value =
+                document.querySelector("#choice").value =
                     selectedVariant.choice;
+                document.querySelector("#form-price").value =
+                    selectedVariant.price;
 
                 // Reset số lượng về 1 và kiểm tra tồn kho
                 document.querySelector("#quantity-value").textContent = "1";

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from website.models import get_products, get_product_by_id, get_cart, get_user_info, get_user_addresses, add_to_cart_func, add_user_address, delete_user_address, update_user_address, set_default_address, delete_from_cart_func
+from website.models import get_products, get_product_by_id, get_cart, get_user_info, get_user_addresses, add_to_cart_func, add_user_address, delete_user_address, update_user_address, set_default_address, delete_from_cart_func, create_order, add_order_detail, update_vendee_spending, update_vender_income, update_product_stock, get_vender_id_by_product
 from decimal import Decimal
 
 views = Blueprint('views', __name__)
@@ -230,30 +230,32 @@ def payment():
     total_products = sum(item['quantity'] for item in cart_items)
     
     if request.method == 'POST':
-        # Xử lý thanh toán
         payment_method = request.form.get('payment')
         if not payment_method:
             flash('Vui lòng chọn phương thức thanh toán', 'error')
             return redirect(url_for('views.payment'))
         
-        # Tạo đơn hàng
+        if not default_address:
+            flash('Vui lòng chọn địa chỉ giao hàng mặc định', 'error')
+            return redirect(url_for('views.payment'))
+
         order_id = create_order(
             user_id=session['user_id'],
             cart_id=cart_items[0]['cart_id'],
             payment_method=payment_method,
             total_money=total_money,
             total_products=total_products,
-            home_number=default_address['home_number'] if default_address else None,
-            street=default_address['street'] if default_address else None,
-            district=default_address['district'] if default_address else None,
-            city=default_address['city'] if default_address else None,
-            province=default_address['province'] if default_address else None
+            home_number=default_address['home_number'],
+            street=default_address['street'],
+            district=default_address['district'],
+            city=default_address['city'],
+            province=default_address['province']
         )
         
         if order_id:
-            # Thêm chi tiết đơn hàng
+            success = True
             for item in cart_items:
-                success = add_order_detail(
+                success = success and add_order_detail(
                     order_id=order_id,
                     product_id=item['product_id'],
                     color=item['color'],
@@ -261,17 +263,52 @@ def payment():
                     quantity=item['quantity'],
                     total_money=item['total_money']
                 )
+                
                 if not success:
                     flash('Lỗi khi thêm chi tiết đơn hàng', 'error')
                     return redirect(url_for('views.payment'))
                 
-                # Xóa sản phẩm khỏi giỏ hàng
-                delete_from_cart_func(
+                success = success and update_product_stock(
+                    product_id=item['product_id'],
+                    color=item['color'],
+                    size=item['size'],
+                    quantity=item['quantity']
+                )
+                
+                if not success:
+                    flash('Lỗi khi cập nhật số lượng tồn kho', 'error')
+                    return redirect(url_for('views.payment'))
+                
+                vender_id = get_vender_id_by_product(item['product_id'])
+                if vender_id:
+                    success = success and update_vender_income(
+                        vender_id=vender_id,
+                        amount=item['total_money']
+                    )
+                
+                if not success:
+                    flash('Lỗi khi cập nhật thu nhập của vender', 'error')
+                    return redirect(url_for('views.payment'))
+                
+                success = success and delete_from_cart_func(
                     cart_id=item['cart_id'],
                     product_id=item['product_id'],
                     color=item['color'],
                     size=item['size']
                 )
+                
+                if not success:
+                    flash('Lỗi khi xóa sản phẩm khỏi giỏ hàng', 'error')
+                    return redirect(url_for('views.payment'))
+            
+            success = success and update_vendee_spending(
+                user_id=session['user_id'],
+                amount=total_money + 30000
+            )
+            
+            if not success:
+                flash('Lỗi khi cập nhật tổng chi tiêu của người mua', 'error')
+                return redirect(url_for('views.payment'))
             
             flash('Đặt hàng thành công!', 'success')
             return redirect(url_for('views.home'))
