@@ -112,6 +112,11 @@ block extra_css %}
                             id="form-quantity"
                             value="1"
                         />
+                        <input
+                            type="hidden"
+                            name="price"
+                            value="{{ product.variants[0].price }}"
+                        />
                         <button type="submit" class="add-to-cart-btn">
                             <i class="fas fa-shopping-cart cart-icon"></i> Thêm
                             vào giỏ hàng

@@ -1,14 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from website.models import get_products, get_product_by_id, get_cart, get_user_info
-# create_order, add_order_detail
+from website.models import get_products, get_product_by_id, get_cart, get_user_info, get_user_addresses, add_to_cart_func, add_user_address, delete_user_address, update_user_address, set_default_address, delete_from_cart_func
+from decimal import Decimal
 
 views = Blueprint('views', __name__)
 
+# Thêm route cho việc truy cập trang chủ
 @views.route('/')
 def home():
     products = get_products()
+    
     return render_template('home.html', products=products)
 
+# Thêm route cho việc truy cập trang sản phẩm
 @views.route('/product/<int:product_id>')
 def product_detail(product_id):
     print(f"Fetching product with ID: {product_id}")  # Debug
@@ -18,16 +21,18 @@ def product_detail(product_id):
         return redirect(url_for('views.home'))
     return render_template('product.html', product=product)
 
-
+# Thêm route cho việc truy cập giỏ hàng
 @views.route('/cart')
 def cart():
     if 'user_id' not in session:
         flash('Vui lòng đăng nhập để xem giỏ hàng', 'error')
         return redirect(url_for('auth.login'))
     cart_items = get_cart(session['user_id'])
-    return render_template('cart.html', cart_items=cart_items)
+    total_money = sum(Decimal(str(item['total_money'])) for item in cart_items)
+    total_products = sum(item['quantity'] for item in cart_items)
+    return render_template('cart.html', cart_items=cart_items, total_money=total_money, total_products=total_products)
 
-
+# Thêm route cho việc thêm sản phẩm vào giỏ hàng
 @views.route('/cart/add/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
     if 'user_id' not in session:
@@ -42,6 +47,7 @@ def add_to_cart(product_id):
     # Get form data
     choice = request.form.get('choice')
     quantity = int(request.form.get('quantity', 1))
+    price = Decimal(request.form.get('price', '0.00'))
 
     # Find the selected variant
     selected_variant = next((v for v in product['variants'] if v['choice'] == choice), None)
@@ -55,7 +61,7 @@ def add_to_cart(product_id):
         return redirect(url_for('views.product_detail', product_id=product_id))
 
     # Add to cart
-    success = add_to_cart(session['user_id'], product_id, choice, quantity)
+    success = add_to_cart_func(session['user_id'], product_id, choice, quantity, price)
     if success:
         flash('Đã thêm sản phẩm vào giỏ hàng', 'success')
     else:
@@ -63,7 +69,25 @@ def add_to_cart(product_id):
 
     return redirect(url_for('views.product_detail', product_id=product_id))
 
+# Thêm route cho việc xoá sản phẩm khỏi giỏ hàng
+@views.route('/cart/delete', methods=['POST'])
+def delete_from_cart():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng', 'error')
+        return redirect(url_for('auth.login'))
 
+    product_id = int(request.form.get('product_id'))
+    color = request.form.get('color')
+    size = request.form.get('size')
+    cart_id = int(request.form.get('cart_id'))
+
+    success = delete_from_cart_func(cart_id, product_id, color, size)
+    if success:
+        flash('Đã xóa sản phẩm khỏi giỏ hàng', 'success')
+    else:
+        flash('Không thể xóa sản phẩm khỏi giỏ hàng', 'error')
+
+    return redirect(url_for('views.cart'))
 
 # Thêm route cho thông tin cá nhân
 @views.route('/info_user')
@@ -73,7 +97,107 @@ def info_user():
         return redirect(url_for('auth.login'))
 
     user_info = get_user_info(session['user_id'])
-    return render_template('info_user.html')
+    addresses = get_user_addresses(session['user_id'])
+    return render_template('info_user.html', user_info=user_info, addresses=addresses)
+
+# Thêm route cho việc thêm địa chỉ
+@views.route('/info_user/add_address', methods=['POST'])
+def add_address():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để thêm địa chỉ', 'error')
+        return redirect(url_for('auth.login'))
+
+    home_number = request.form.get('home_number')
+    street = request.form.get('street')
+    district = request.form.get('district')
+    city = request.form.get('city')
+    province = request.form.get('province')
+    is_default = request.form.get('is_default') == 'on'
+
+    if not all([home_number, street, district, city, province]):
+        flash('Vui lòng điền đầy đủ thông tin địa chỉ', 'error')
+        return redirect(url_for('views.info_user'))
+
+    success = add_user_address(session['user_id'], home_number, street, district, city, province, is_default)
+    if success:
+        flash('Thêm địa chỉ thành công', 'success')
+    else:
+        flash('Thêm địa chỉ thất bại', 'error')
+    return redirect(url_for('views.info_user'))
+
+# Thêm route cho việc xóa địa chỉ
+@views.route('/info_user/delete_address', methods=['POST'])
+def delete_address():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để xóa địa chỉ', 'error')
+        return redirect(url_for('auth.login'))
+
+    home_number = request.form.get('home_number')
+    street = request.form.get('street')
+    district = request.form.get('district')
+    city = request.form.get('city')
+    province = request.form.get('province')
+
+    success = delete_user_address(session['user_id'], home_number, street, district, city, province)
+    if success:
+        flash('Xóa địa chỉ thành công', 'success')
+    else:
+        flash('Xóa địa chỉ thất bại', 'error')
+    return redirect(url_for('views.info_user'))
+
+# Thêm route cho việc sửa địa chỉ
+@views.route('/info_user/update_address', methods=['POST'])
+def update_address():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để sửa địa chỉ', 'error')
+        return redirect(url_for('auth.login'))
+
+    old_home_number = request.form.get('old_home_number')
+    old_street = request.form.get('old_street')
+    old_district = request.form.get('old_district')
+    old_city = request.form.get('old_city')
+    old_province = request.form.get('old_province')
+
+    new_home_number = request.form.get('home_number')
+    new_street = request.form.get('street')
+    new_district = request.form.get('district')
+    new_city = request.form.get('city')
+    new_province = request.form.get('province')
+
+    if not all([old_home_number, old_street, old_district, old_city, old_province, new_home_number, new_street, new_district, new_city, new_province]):
+        flash('Vui lòng điền đầy đủ thông tin địa chỉ', 'error')
+        return redirect(url_for('views.info_user'))
+
+    success = update_user_address(session['user_id'], old_home_number, old_street, old_district, old_city, old_province, new_home_number, new_street, new_district, new_city, new_province)
+    if success:
+        flash('Sửa địa chỉ thành công', 'success')
+    else:
+        flash('Sửa địa chỉ thất bại', 'error')
+    return redirect(url_for('views.info_user'))
+
+# Thêm route cho việc thiết lập địa chỉ mặc định
+@views.route('/info_user/set_default_address', methods=['POST'])
+def set_default():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để thiết lập địa chỉ mặc định', 'error')
+        return redirect(url_for('auth.login'))
+
+    home_number = request.form.get('home_number')
+    street = request.form.get('street')
+    district = request.form.get('district')
+    city = request.form.get('city')
+    province = request.form.get('province')
+
+    success = set_default_address(session['user_id'], home_number, street, district, city, province)
+    if success:
+        flash('Thiết lập địa chỉ mặc định thành công', 'success')
+    else:
+        flash('Thiết lập địa chỉ mặc định thất bại', 'error')
+    return redirect(url_for('views.info_user'))
+
+
+
+
 
 
 

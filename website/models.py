@@ -5,6 +5,7 @@ from website.config import Config
 def get_db_connection():
     try:
         conn = psycopg2.connect(Config.DATABASE_URL, cursor_factory=RealDictCursor)
+        conn.set_client_encoding('UTF8')
         print("Kết nối cơ sở dữ liệu thành công!")
         return conn
     except Exception as e:
@@ -219,8 +220,8 @@ def get_product_by_id(product_id):
     finally:
         close_db_connection(conn, cur)
 
-
-def add_to_cart(user_id, product_id, color, size, quantity, price):
+# Hàm thêm sản phẩm vào giỏ hàng
+def add_to_cart_func(user_id, product_id, choice, quantity, price):
     conn = get_db_connection()
     if not conn:
         return False
@@ -237,6 +238,7 @@ def add_to_cart(user_id, product_id, color, size, quantity, price):
             return False
         cart_id = cart['cartid']
 
+        color, size = choice.split(', ')
         # Kiểm tra xem biến thể đã tồn tại trong giỏ hàng chưa
         cur.execute("""
             SELECT Quantity, TotalMoney
@@ -273,6 +275,7 @@ def add_to_cart(user_id, product_id, color, size, quantity, price):
     finally:
         close_db_connection(conn, cur)
 
+# Hàm lấy giỏ hàng của người dùng
 def get_cart(user_id):
     conn = get_db_connection()
     if not conn:
@@ -283,16 +286,15 @@ def get_cart(user_id):
             SELECT 
                 cc.CartID,
                 cc.ProductID,
+                pv.image,
                 p.Description AS name,
                 cc.Color,
-                cc.Size,
+                cc."Size" AS size,
                 cc.Quantity,
-                cc.TotalMoney,
-                pv.Price,
-                pv.StockQuantity
+                cc.TotalMoney
             FROM CART_CONTAIN_PRODUCT_VARIANT cc
             JOIN PRODUCT p ON cc.ProductID = p.ProductID
-            JOIN PRODUCT_VARIANT pv ON cc.ProductID = pv.ProductID AND cc.Color = pv.Color AND cc.Size = pv.Size
+            JOIN PRODUCT_VARIANT pv ON cc.ProductID = pv.ProductID AND cc.Color = pv.Color AND cc."Size" = pv."Size"
             JOIN VENDEE_AND_CART vc ON cc.CartID = vc.CartID
             WHERE vc.UserID = %s
         """, (user_id,))
@@ -303,10 +305,10 @@ def get_cart(user_id):
                 'name': item['name'],
                 'color': item['color'],
                 'size': item['size'],
-                'quantity': item['quantity'],
-                'price': item['price'],
                 'total_money': item['totalmoney'],
-                'stock': item['stockquantity']
+                'quantity': item['quantity'],
+                'image': item['image'],
+                'cart_id': item['cartid']
             }
             for item in items
         ]
@@ -316,6 +318,27 @@ def get_cart(user_id):
     finally:
         close_db_connection(conn, cur)
 
+# Hàm xóa sản phẩm khỏi giỏ hàng
+def delete_from_cart_func(cart_id, product_id, color, size):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            DELETE FROM CART_CONTAIN_PRODUCT_VARIANT
+            WHERE CartID = %s AND ProductID = %s AND Color = %s AND "Size" = %s
+        """, (cart_id, product_id, color, size))
+        conn.commit()
+        return cur.rowcount > 0  
+    except Exception as e:
+        print(f"Error deleting from cart: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm lấy thông tin người dùng
 def get_user_info(user_id):
     conn = get_db_connection()
     if not conn:
@@ -324,30 +347,166 @@ def get_user_info(user_id):
         cur = conn.cursor()
         cur.execute("""
             SELECT 
-                u.UserID,
                 u.FirstName,
                 u.LastName,
                 u.Email,
                 up.PhoneNumber,
-                u.DateOfBirth
+                u.DateOfBirth,
+                vc.TotalSpending
             FROM "USER" u
             JOIN USER_PHONE up ON u.UserID = up.UserID
+            JOIN VENDEE_AND_CART vc ON u.UserID = vc.UserID
             WHERE u.UserID = %s
         """, (user_id,))
         user_info = cur.fetchone()
         return {
-            'user_id': user_info['userid'],
             'first_name': user_info['firstname'],
             'last_name': user_info['lastname'],
             'email': user_info['email'],
             'phone_number': user_info['phonenumber'],
-            'date_of_birth': user_info['dateofbirth']
+            'date_of_birth': user_info['dateofbirth'],
+            'total_spending': user_info['totalspending']
         }
     except Exception as e:
         print(f"Error fetching user info: {e}")
         return None
     finally:
         close_db_connection(conn, cur)
+
+# Hàm lấy danh sách địa chỉ của người dùng
+def get_user_addresses(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT HomeNumber, Street, District, City, Province, IsDefault
+            FROM VENDEE_ADDRESS
+            WHERE UserID = %s
+        """, (user_id,))
+        addresses = cur.fetchall()
+        return [
+            {
+                'home_number': address['homenumber'],
+                'street': address['street'],
+                'district': address['district'],
+                'city': address['city'],
+                'province': address['province'],
+                'is_default': address['isdefault']
+            }
+            for address in addresses
+        ]
+    except Exception as e:
+        print(f"Error fetching addresses: {e}")
+        return []
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm thêm địa chỉ mới
+def add_user_address(user_id, home_number, street, district, city, province, is_default=False):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        # Nếu địa chỉ mới được đặt làm mặc định, bỏ mặc định của các địa chỉ khác
+        if is_default:
+            cur.execute("""
+                UPDATE VENDEE_ADDRESS
+                SET IsDefault = FALSE
+                WHERE UserID = %s
+            """, (user_id,))
+        # Thêm địa chỉ mới
+        cur.execute("""
+            INSERT INTO VENDEE_ADDRESS (UserID, HomeNumber, Street, District, City, Province, IsDefault)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (user_id, home_number, street, district, city, province, is_default))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error adding address: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm xóa địa chỉ
+def delete_user_address(user_id, home_number, street, district, city, province):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            DELETE FROM VENDEE_ADDRESS
+            WHERE UserID = %s AND HomeNumber = %s AND Street = %s AND District = %s AND City = %s AND Province = %s
+        """, (user_id, home_number, street, district, city, province))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error deleting address: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm sửa địa chỉ
+def update_user_address(user_id, old_home_number, old_street, old_district, old_city, old_province, new_home_number, new_street, new_district, new_city, new_province):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE VENDEE_ADDRESS
+            SET HomeNumber = %s, Street = %s, District = %s, City = %s, Province = %s
+            WHERE UserID = %s AND HomeNumber = %s AND Street = %s AND District = %s AND City = %s AND Province = %s
+        """, (new_home_number, new_street, new_district, new_city, new_province, user_id, old_home_number, old_street, old_district, old_city, old_province))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating address: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm thiết lập địa chỉ mặc định
+def set_default_address(user_id, home_number, street, district, city, province):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        # Bỏ mặc định của tất cả địa chỉ khác
+        cur.execute("""
+            UPDATE VENDEE_ADDRESS
+            SET IsDefault = FALSE
+            WHERE UserID = %s
+        """, (user_id,))
+        # Đặt địa chỉ này làm mặc định
+        cur.execute("""
+            UPDATE VENDEE_ADDRESS
+            SET IsDefault = TRUE
+            WHERE UserID = %s AND HomeNumber = %s AND Street = %s AND District = %s AND City = %s AND Province = %s
+        """, (user_id, home_number, street, district, city, province))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error setting default address: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cur)
+
+
+
+
+
+
+
+
 
 # # Hàm tạo đơn hàng (đã có từ trước, giữ nguyên)
 # def create_order(user_id):
