@@ -43,12 +43,29 @@
 .sidebar ul li input {
     margin-right: 8px;
 }
-.sidebar button {
-    color: #1d4ed8;
-    background: none;
+
+.apply-button {
+    background-color: #1a73e8; /* Màu xanh lá */
+    color: #ffffff; /* Chữ trắng */
+    padding: 10px 20px;
     border: none;
+    border-radius: 5px; /* Bo góc */
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease; /* Hiệu ứng chuyển màu và nhấn */
+    width: 100%; /* Chiếm toàn bộ chiều ngang */
+    text-align: center;
 }
+
+.apply-button:hover {
+    background-color: blue; /* Màu xanh đậm hơn khi hover */
+}
+
+.apply-button:active {
+    transform: scale(0.98); /* Hiệu ứng nhấn nhẹ */
+}
+
 .main-content {
     flex: 1;
     margin-left: 16px;

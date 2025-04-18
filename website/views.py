@@ -1,15 +1,49 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from website.models import get_products, get_product_by_id, get_cart, get_user_info, get_user_addresses, add_to_cart_func, add_user_address, delete_user_address, update_user_address, set_default_address, delete_from_cart_func, create_order, add_order_detail, update_vendee_spending, update_vender_income, update_product_stock, get_vender_id_by_product
+from website.models import get_products, get_product_by_id, get_cart, get_user_info, get_user_addresses, add_to_cart_func, add_user_address, delete_user_address, update_user_address, set_default_address, delete_from_cart_func, create_order, add_order_detail, update_vendee_spending, update_vender_income, update_product_stock, get_vender_id_by_product, get_shops_with_products, get_filtered_products
 from decimal import Decimal
 
 views = Blueprint('views', __name__)
 
 # Thêm route cho việc truy cập trang chủ
-@views.route('/')
+@views.route('/', methods=['GET', 'POST'])
 def home():
+    # Danh sách loại sản phẩm tĩnh
+    product_types = ['Áo', 'Quần', 'Phụ kiện khác']
+    # Ánh xạ giữa giá trị hiển thị và giá trị trong DB
+    type_mapping = {
+        'Áo': 'ao',
+        'Quần': 'quan',
+        'Phụ kiện khác': 'pk'
+    }
+
+    # Lấy danh sách shop
+    shops = get_shops_with_products()
+
+    # Mặc định hiển thị tất cả sản phẩm
     products = get_products()
-    
-    return render_template('home.html', products=products)
+
+    if request.method == 'POST':
+        # Lấy dữ liệu từ form
+        selected_types = request.form.getlist('product_types')  # Checkbox cho loại sản phẩm
+        selected_shops = request.form.getlist('shop_ids')  # Checkbox cho shop
+        selected_shops = [int(shop_id) for shop_id in selected_shops if shop_id.isdigit()]
+
+        # Chuyển đổi loại sản phẩm sang giá trị trong DB
+        db_selected_types = [type_mapping[ptype] for ptype in selected_types if ptype in type_mapping]
+
+        # Lọc sản phẩm nếu có dữ liệu được chọn
+        if db_selected_types or selected_shops:
+            products = get_filtered_products(
+                product_types=db_selected_types if db_selected_types else None,
+                shop_ids=selected_shops if selected_shops else None
+            )
+
+    return render_template(
+        'home.html',
+        products=products,
+        shops=shops,
+        product_types=product_types
+    )
 
 # Thêm route cho thông tin cá nhân
 @views.route('/info_user')

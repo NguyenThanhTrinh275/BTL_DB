@@ -12,7 +12,7 @@ extra_css %}
     <div class="flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="mb-4">
+            <!-- <div class="mb-4">
                 <h2>Loại sản phẩm</h2>
                 <ul>
                     <li>
@@ -37,13 +37,54 @@ extra_css %}
                         <label for="dell"> Dell </label>
                     </li>
                 </ul>
-            </div>
+            </div> 
 
             <div class="mb-4">
                 <button class="mt-2 bg-orange-500 text-white py-2 px-4 rounded">
                     ÁP DỤNG
                 </button>
-            </div>
+            </div>-->
+
+            <form method="POST" action="{{ url_for('views.home') }}">
+                <div class="mb-4">
+                    <h2>Loại sản phẩm</h2>
+                    <ul>
+                        {% for type in product_types %}
+                        <li>
+                            <input
+                                id="{{ type }}"
+                                type="checkbox"
+                                name="product_types"
+                                value="{{ type }}"
+                            />
+                            <label for="{{ type }}">{{ type }}</label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h2>Cửa hàng</h2>
+                    <ul>
+                        {% for shop in shops %}
+                        <li>
+                            <input
+                                id="shop_{{ shop.shopid }}"
+                                type="checkbox"
+                                name="shop_ids"
+                                value="{{ shop.shopid }}"
+                            />
+                            <label for="shop_{{ shop.shopid }}"
+                                >{{ shop.name }}</label
+                            >
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <button type="submit" class="apply-button">ÁP DỤNG</button>
+                    <!-- class="mt-2 bg-orange-500 text-white py-2 px-4 rounded" -->
+                </div>
+            </form>
         </div>
 
         <!-- Main Content -->

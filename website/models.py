@@ -566,7 +566,6 @@ def add_order_detail(order_id, product_id, color, size, quantity, total_money):
     finally:
         close_db_connection(conn, cur)
 
-
 def update_vendee_spending(user_id, amount):
     conn = get_db_connection()
     if not conn:
@@ -587,7 +586,6 @@ def update_vendee_spending(user_id, amount):
     finally:
         close_db_connection(conn, cur)
 
-    
 def update_vender_income(vender_id, amount):
     conn = get_db_connection()
     if not conn:
@@ -607,7 +605,6 @@ def update_vender_income(vender_id, amount):
         return False
     finally:
         close_db_connection(conn, cur)
-
 
 def update_product_stock(product_id, color, size, quantity):
     conn = get_db_connection()
@@ -647,5 +644,99 @@ def get_vender_id_by_product(product_id):
     except Exception as e:
         print(f"Error fetching vender ID: {e}")
         return None
+    finally:
+        close_db_connection(conn, cur)
+
+
+# Hàm lấy danh sách shop có sản phẩm
+def get_shops_with_products():
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT DISTINCT s.ShopID, s."Name" AS name
+            FROM SHOP s
+            JOIN PRODUCT p ON s.ShopID = p.ShopID
+            WHERE EXISTS (
+                SELECT 1
+                FROM PRODUCT_VARIANT pv
+                WHERE pv.ProductID = p.ProductID
+                AND pv.StockQuantity > 0
+            )
+            ORDER BY s."Name"
+        """)
+        shops = cur.fetchall()
+        return [
+            {
+                'shopid': shop['shopid'],
+                'name': shop['name']
+            }
+            for shop in shops
+        ]
+    except Exception as e:
+        print(f"Error fetching shops: {e}")
+        return []
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm lọc sản phẩm theo loại và shop
+def get_filtered_products(product_types=None, shop_ids=None):
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        cur = conn.cursor()
+        query = """
+            SELECT DISTINCT ON (p.ProductID)
+                p.ProductID AS productid,
+                p.Description AS name,
+                (SELECT MIN(pv2.Price)
+                 FROM PRODUCT_VARIANT pv2
+                 WHERE pv2.ProductID = p.ProductID
+                 AND pv2.StockQuantity > 0) AS price,
+                (SELECT pi.Images 
+                 FROM PRODUCT_IMAGES pi 
+                 WHERE pi.ProductID = p.ProductID 
+                 LIMIT 1) AS image
+            FROM PRODUCT p
+            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
+            JOIN SHOP s ON p.ShopID = s.ShopID
+            WHERE EXISTS (
+                SELECT 1
+                FROM PRODUCT_VARIANT pv3
+                WHERE pv3.ProductID = p.ProductID
+                AND pv3.StockQuantity > 0
+            )
+        """
+        params = []
+
+        # Thêm điều kiện lọc theo loại sản phẩm
+        if product_types:
+            query += ' AND p."Type" IN %s'
+            params.append(tuple(product_types))
+
+        # Thêm điều kiện lọc theo shop
+        if shop_ids:
+            query += " AND s.ShopID IN %s"
+            params.append(tuple(shop_ids))
+
+        query += " ORDER BY p.ProductID"
+
+        cur.execute(query, params)
+        products = cur.fetchall()
+        return [
+            {
+                'id': product['productid'],
+                'name': product['name'],
+                'price': product['price'],
+                'image': product['image']
+            }
+            for product in products
+        ]
+    except Exception as e:
+        print(f"Error fetching filtered products: {e}")
+        return []
     finally:
         close_db_connection(conn, cur)
