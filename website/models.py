@@ -2,6 +2,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from website.config import Config
 
+
+# Hàm kết nối đến cơ sở dữ liệu PostgreSQL
 def get_db_connection():
     try:
         conn = psycopg2.connect(Config.DATABASE_URL, cursor_factory=RealDictCursor)
@@ -11,14 +13,14 @@ def get_db_connection():
     except Exception as e:
         print(f"Database connection error: {e}")
         return None
-
 def close_db_connection(conn, cursor=None):
     if cursor:
         cursor.close()
     if conn:
         conn.close()
 
-# Hàm kiểm tra email đã tồn tại chưa
+
+# Hàm đăng kí và đăng nhập tài khoản người dùng
 def check_email_exists(email):
     conn = get_db_connection()
     if not conn:
@@ -30,7 +32,6 @@ def check_email_exists(email):
         return exists
     finally:
         close_db_connection(conn, cur)
-
 # Hàm đăng ký người dùng
 def register_user(first_name, last_name, email, password, phone_number, date_of_birth):
     conn = get_db_connection()
@@ -84,7 +85,6 @@ def register_user(first_name, last_name, email, password, phone_number, date_of_
         return None
     finally:
         close_db_connection(conn, cur)
-
 # Hàm đăng nhập
 def login_user(email, password):
     conn = get_db_connection()
@@ -104,6 +104,9 @@ def login_user(email, password):
         return user
     finally:
         close_db_connection(conn, cur)
+
+
+
 
 # Hàm lấy danh sách sản phẩm (đã có từ trước, giữ nguyên)
 def get_products():
@@ -544,6 +547,7 @@ def create_order(user_id, cart_id, payment_method, total_money, total_products, 
     finally:
         close_db_connection(conn, cur)
 
+# Hàm thêm chi tiết đơn hàng
 def add_order_detail(order_id, product_id, color, size, quantity, total_money):
     conn = get_db_connection()
     if not conn:
@@ -566,6 +570,7 @@ def add_order_detail(order_id, product_id, color, size, quantity, total_money):
     finally:
         close_db_connection(conn, cur)
 
+# Hàm cập nhật tổng chi tiêu của người dùng
 def update_vendee_spending(user_id, amount):
     conn = get_db_connection()
     if not conn:
@@ -586,6 +591,7 @@ def update_vendee_spending(user_id, amount):
     finally:
         close_db_connection(conn, cur)
 
+# Hàm cập nhật thu nhập của người bán hàng
 def update_vender_income(vender_id, amount):
     conn = get_db_connection()
     if not conn:
@@ -646,7 +652,6 @@ def get_vender_id_by_product(product_id):
         return None
     finally:
         close_db_connection(conn, cur)
-
 
 # Hàm lấy danh sách shop có sản phẩm
 def get_shops_with_products():
@@ -740,3 +745,300 @@ def get_filtered_products(product_types=None, shop_ids=None):
         return []
     finally:
         close_db_connection(conn, cur)
+
+
+
+
+
+# hàm lấy BIẾN THỂ của sản phẩm
+def get_variants_by_product_id(product_id):
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT pv.Color AS color,
+                   pv."Size" AS size,
+                   pv.Price AS price,
+                   pv.StockQuantity AS quantity,
+                   pv.Image AS image
+            FROM PRODUCT_VARIANT pv
+            WHERE pv.ProductID = %s
+        """, (product_id,))
+        variants = cur.fetchall()
+        return [
+            {
+                'image': variant['image'],
+                'color': variant['color'],
+                'size': variant['size'],
+                'price': variant['price'],
+                'quantity': variant['quantity']
+            }
+            for variant in variants
+        ]
+    except Exception as e:
+        print(f"Error fetching variants: {e}")
+        return []
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm lấy sản phẩm theo UserID
+def get_products_by_userid(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT ShopID FROM shop WHERE UserID = %s", (user_id,))
+        shop = cur.fetchone()
+        if not shop:
+            return None
+
+        shop_id = shop['shopid']
+
+        cur.execute("""
+            SELECT p.ProductID, 
+                    p.Description AS name, 
+                    pv.Price AS price,
+                    (SELECT array_agg(pv2.Color)
+                    FROM PRODUCT_VARIANT pv2
+                    WHERE pv2.ProductID = p.ProductID
+                    AND pv2.StockQuantity > 0
+                    ) AS colors,
+                    pv.StockQuantity AS quantity, 
+                   (SELECT pi.Images FROM PRODUCT_IMAGES pi WHERE pi.ProductID = p.ProductID LIMIT 1) AS image
+            FROM PRODUCT p
+            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
+            WHERE p.ShopID = %s AND pv.StockQuantity > 0
+        """, (shop_id,))
+    
+        products = cur.fetchall()
+        return products
+    except Exception as e:
+        print(f"Error fetching producst: {e}")
+        return []
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm lấy sản phẩm theo ID (đã có từ trước, giữ nguyên)
+def get_product_by_id_func(product_id):
+    conn = get_db_connection()  
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT * FROM product WHERE productid = %s
+            """, (product_id,)
+        )
+        product = cur.fetchone()
+        if product:
+            return product
+        else:
+            return None
+    except Exception as e:
+        print(f"Error fetching product: {e}")
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm truy xuất shop theo UserID 
+def get_shop_by_user_id(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM shop WHERE userid = %s", (user_id,))
+        shop = cur.fetchone()
+        
+        if shop:
+            return shop
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Đăng ký shop cho UserID chưa có shop
+def reg_shop_func(user_id, name, address, income, tax_number, phone_num):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO VOUCHER_CREATOR
+            DEFAULT VALUES RETURNING creatorid; 
+            """
+        )
+        creator_id = cur.fetchone()['creatorid']
+
+        cur.execute(
+            """
+            INSERT INTO VENDER (UserID, Income, TaxNumber, CreatorId)
+            VALUES (%s, %s, %s, %s) RETURNING UserID
+            """, 
+            (user_id, income, tax_number, creator_id)
+        )
+        vender_user_id = cur.fetchone()['userid']
+
+        cur.execute(
+            """
+            INSERT INTO shop (Address, PhoneNumber, "Name", UserID) 
+            VALUES (%s, %s, %s, %s) RETURNING ShopID
+            """,
+            (address, phone_num, name, vender_user_id)
+        )
+        shop_id = cur.fetchone()['shopid'] 
+
+        conn.commit()
+        return shop_id
+    except Exception as e:
+        print(f"Gặp lỗi khi đăng ký {e}")
+        conn.rollback()
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm truy xuất shop_id từ Vender
+def get_shop_id_by_user_id(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT shopid 
+            FROM shop 
+            WHERE userid = %s
+            """, 
+            (user_id,)
+        )
+        shop = cur.fetchone()
+        if shop:
+            return shop['shopid']
+        return None
+    except Exception as e:
+        print(f"Error fetching shop_id: {e}")
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm đăng ký sản phẩm
+def create_product(shop_id, type, description, pic_text, color, size, price, stock_quantity):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            INSERT INTO PRODUCT ("Type", Description, ShopID) 
+            VALUES (%s, %s, %s) RETURNING ProductID;
+            """, 
+            (type, description, shop_id)
+        )
+        product_id = cur.fetchone()['productid']  
+
+        cur.execute(
+            """
+            INSERT INTO PRODUCT_VARIANT (Color, "Size", ProductID, Price, StockQuantity, Image) 
+            VALUES (%s, %s, %s, %s, %s, %s);
+            """, 
+            (color, size, product_id, price, stock_quantity, pic_text)
+        )
+
+        conn.commit()
+        return product_id  
+    except Exception as e:
+        print(f"Error registering product: {e}")
+        conn.rollback()
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm update SỐ LƯỢNG sản phẩm
+def update_product(product_id, new_stock_quantity):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+        
+        cur.execute(
+            "UPDATE product_variant SET StockQuantity = %s WHERE ProductID = %s",
+            (new_stock_quantity, product_id)
+            )
+        conn.commit()
+        print(f'Cập nhật số lượng thành công!', 'success')
+    except Exception as e:
+        print(f'Cập nhật thất bại: {e}', 'error')
+        conn.rollback()
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm xoá sản phẩm 
+def delete_product(product_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            DELETE FROM PRODUCT_VARIANT
+            WHERE ProductID = %s;
+            """,
+            (product_id,)
+        )
+        
+        cur.execute(
+            """
+            DELETE FROM PRODUCT
+            WHERE ProductID = %s;
+            """,
+            (product_id,)
+        )
+
+        conn.commit()
+        return product_id
+    except Exception as e:
+        print(f"Error deleting product: {e}")
+        conn.rollback()
+        return None
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm HIỂN THỊ doanh thu
+def get_seller_income(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            SELECT COALESCE(Income, 0) AS income
+            FROM VENDER
+            WHERE userid = %s;
+            """,
+            (user_id,)
+        )
+
+        row = cur.fetchone()
+        return row['income'] if row else 0
+    except Exception as e:
+        print(f"Không thể truy xuất doanh thu: {e}")
+        conn.rollback()
+        return None
+    finally:
+        close_db_connection(conn, cur)
+    
+    

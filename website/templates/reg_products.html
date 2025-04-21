@@ -1,0 +1,84 @@
+{% extends "base.html" %}{% block title %}Đăng Ký Sản Phẩm{% endblock %}{% block extra_css %}
+<link 
+    rel="stylesheet" 
+    href="{{ url_for('static', filename='styles/reg_products.css') }}" 
+/>
+    <script src="https://cdn.tailwindcss.com"></script>
+{% endblock %} {% block content %}
+
+<div class="container">
+    <!-- Form Thêm Sản Phẩm -->
+    <form method="POST" action="{{ url_for('views.reg_products') }}">
+        <h2 class="text-xl font-bold text-center mb-4">Thêm Sản Phẩm</h2>
+        <div class="form-container">
+            <!-- Ảnh sản phẩm cố định bên trái -->
+            <img src="#" alt="Ảnh sản phẩm" class="product-image" />
+            <!-- Các trường thuộc tính bên phải -->
+            <div class="form-fields">
+                <div class="product-header">
+                    <div class="form-group product-name-group">
+                        <label for="product_name">Tên Sản Phẩm</label>
+                        <input type="text" id="product_name" name="product_name" placeholder="Nhập tên sản phẩm" value="{{ product_name if product_name else '' }}" />
+                    </div>
+                    <!--<button type="button" class="btn-secondary add-variant-btn" onclick="addVariantRow()">Thêm Biến Thể</button>-->
+                </div>
+                <div class="form-group">
+                    <label for="category">Phân Loại</label>
+                    <select id="category" name="category">
+                        <option value="">Chọn phân loại</option>
+                        <option value="ao" {% if category == 'ao' %}selected{% endif %}>Áo</option>
+                        <option value="quan" {% if category == 'quan' %}selected{% endif %}>Quần</option>
+                        <option value="pk" {% if category == 'pk' %}selected{% endif %}>Phụ Kiện</option>
+                    </select>
+                </div>                            
+                <!-- Bảng biến thể -->
+                <table class="variants-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Hình Ảnh</th>
+                            <th style="width: 15%;">Màu Sắc</th>
+                            <th style="width: 15%;">Size</th>
+                            <th style="width: 15%;">Giá</th>
+                            <th style="width: 15%;">Số Lượng</th>
+                            <th style="width: 20%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="variants-tbody">
+                        <tr>
+                            <td><input type="text" name="variant_image[]" placeholder="Đường dẫn hình ảnh" /></td>
+                            <td><input type="text" name="variant_color[]" placeholder="Màu sắc" /></td>
+                            <td>
+                                <select name="variant_size[]">
+                                    <option value="">Chọn size</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                </select>
+                            </td>
+                            <td><input type="text" name="variant_price[]" placeholder="Giá" /></td>
+                            <td><input type="number" name="variant_quantity[]" placeholder="Số lượng" /></td>
+                            <td class="action-buttons">
+                                {% if product %}
+                                    <form method="POST" action="{{ url_for('views.update_product', product_id=product.product_id) }}">
+                                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('views.reg_products') }}">
+                                        <button type="submit" class="btn btn-primary">Đăng ký</button>
+                                    </form>
+                                {% endif %}
+                                {% if product %}
+                                    <form method="POST" action="{{ url_for('views.delete_product_route', product_id=product.product_id) }}">
+                                        <button type="button" class="btn-danger" > Xoá </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

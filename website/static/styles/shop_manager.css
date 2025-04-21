@@ -1,80 +1,140 @@
-.cart-section {
-    width: 80%;
-    margin: 50px auto;
-    background-color: #fff;
-    padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+/* Custom styles for shop_manager.html */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7fafc;
 }
 
-.cart-price {
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Shop section */
+.shop-section {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+}
+
+.shop-section h2 {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.shop-section p {
+    color: #718096;
+    margin-bottom: 1.5rem;
+}
+
+/* Button */
+.shop-section a.bg-blue-500 {
+    background-color: #3b82f6; /* Thay màu Tailwind bg-blue-500 bằng màu Shopee */
+    color: #ffffff;
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    transition: all 0.2s ease-in-out;
+}
+
+.shop-section a.bg-blue-500:hover {
+    background-color: #2563eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Products table */
+.products-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.products-table th,
+.products-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 0.9rem;
     text-align: left;
-    margin: 0;
-    font-size: 16px;
-    color: #333;
-    text-align: left;
 }
 
-.cart-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    padding: 10px 0;
-    border-bottom: 1px solid #eaeaea;
+.products-table th {
+    font-weight: 600;
+    color: #2d3748;
+    background-color: #f7fafc;
 }
 
-.cart-item {
-    display: flex;
-    align-items: center;
-    max-width: 200px;
-    overflow: hidden;
+.products-table td {
+    color: #4a5568;
 }
 
-.cart-item-image {
-    margin-right: 15px;
+.products-table img {
+    width: 50px;
+    height: 50px;
     object-fit: cover;
+    border-radius: 0.25rem;
 }
 
-.cart-item-title {
-    max-width: 150px;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    text-overflow: ellipsis;
-    white-space: normal;
+.products-table select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    background-color: #f7fafc;
+    font-size: 0.85rem;
+    color: #718096;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2397A3B6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1rem;
 }
 
-.cart-quantity input {
-    width: 60px;
-    padding: 5px;
+/* Action buttons */
+.products-table .btn-primary,
+.products-table .btn-danger {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    margin-right: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.products-table .btn-primary {
+    background-color: #3b82f6; /* Màu chính Shopee */
+    color: #ffffff;
+}
+
+.products-table .btn-primary:hover {
+    background-color: #2563eb; /* Màu tối hơn khi hover */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.products-table .btn-danger {
+    background-color: #3b82f6; /* Màu đỏ đậm */
+    color: #ffffff;
+}
+
+.products-table .btn-danger:hover {
+    background-color: #2563eb; /* Màu đỏ tối hơn khi hover */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Empty message */
+.products-table .empty-message {
+    color: #3b82f6;
+    font-size: 1rem;
     text-align: center;
-    font-size: 14px;
+    padding: 1rem;
 }
 
-.btn-danger {
-    background-color: red;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 5px;
+.products-table tfoot td:last-child {
+    text-align: right;
 }
-
-.btn-danger:hover {
-    background-color: darkred;
-}
-
-.btn.btn-primary.btn-purchase {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-.btn.btn-primary.btn-purchase:hover {
-    background-color: #218838;
-}
+    

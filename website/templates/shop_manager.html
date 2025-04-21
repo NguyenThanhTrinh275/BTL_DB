@@ -1,126 +1,108 @@
-{% extends "base.html" %} {% block title %}Trang Chủ{% endblock %} {% block
+{% extends "base.html" %} {% block title %}Trang Bán Hàng{% endblock %} {% block
 extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='styles/shop_manager.css') }}"
+/>
 <script src="https://cdn.tailwindcss.com"></script>
 {% endblock %} {% block content %}
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-        <div class="bg-white shadow-md rounded-lg p-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Sản phẩm của bạn</h2>
-                <button class="bg-blue-500 text-white px-4 py-2 rounded">
-                    Thêm Sản Phẩm
-                </button>
-            </div>
-            <table class="w-full text-left">
-                <thead>
-                    <tr>
-                        <th class="pb-2">Sản Phẩm</th>
-                        <th class="pb-2">Mô Tả</th>
-                        <th class="pb-2">Giá</th>
-                        <th class="pb-2">Lựa Chọn Màu Sắc</th>
-                        <th class="pb-2">Size Áo</th>
-                        <th class="pb-2">Số Lượng</th>
-                        <th class="pb-2"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="border-t">
-                        <td class="py-4 flex items-center">
-                            <img
-                                alt="Product image of Mũi Hàn 500"
-                                class="w-30 h-30 mr-4"
-                                height="50"
-                                src="https://storage.googleapis.com/a1aa/image/99aoy9EM5-lUaY6wU5WaNGD-VKd1cVsinMf8Js82iPA.jpg"
-                                width="50"
-                            />
-                            <div>
-                                <div>Mũi Hàn</div>
-                                <div>500</div>
-                            </div>
-                        </td>
-                        <td class="py-4">Mô tả sản phẩm Mũi Hàn 500</td>
-                        <td class="py-4">25,000 VNĐ</td>
-                        <td class="py-4">
-                            <select class="border border-gray-300 rounded p-1">
-                                <option>Đỏ</option>
-                                <option>Xanh</option>
-                                <option>Vàng</option>
-                            </select>
-                        </td>
-                        <td class="py-4">
-                            <select class="border border-gray-300 rounded p-1">
-                                <option>S</option>
-                                <option>M</option>
-                                <option>L</option>
-                                <option>XL</option>
-                            </select>
-                        </td>
-                        <td class="py-4">
-                            <input
-                                class="w-12 border border-gray-300 rounded p-1 text-center"
-                                type="number"
-                                value="1"
-                            />
-                        </td>
-                        <td class="py-4">
+<div class="container">
+    {% if shop %}
+    <div class="shop-section">
+        <h2>Sản phẩm của cửa hàng</h2>
+        <p>Danh sách sản phẩm của bạn.</p>
+        <a
+            href="{{ url_for('views.reg_products') }}"
+            class="bg-blue-500 text-white"
+            >Đăng ký sản phẩm</a
+        >
+
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%">Hình Ảnh</th>
+                    <th style="width: 15%">Tên Sản Phẩm</th>
+                    <th style="width: 15%">Giá</th>
+                    <th style="width: 20%">Màu Sắc</th>
+                    <th style="width: 10%">Số Lượng</th>
+                    <th style="width: 15%">Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if products and products|length > 0 %} {% for product in
+                products %}
+                <tr>
+                    <td>
+                        <img
+                            src="{{ product.image if product.image else '#' }}"
+                            alt="Product image"
+                        />
+                    </td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ "{:,.0f}".format(product.price) }} VNĐ</td>
+                    <td>
+                        <select name="color">
+                            <option value="">Chọn màu</option>
+                            {% for color in product.colors %}
+                            <option value="{{ color }}">{{ color }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        {{ product.quantity if product.quantity is not none else
+                        '0' }}
+                    </td>
+                    <td>
+                        <a
+                            href="{{ url_for('views.update_product_route', product_id=product.productid) }}"
+                            style="display: inline"
+                        >
+                            <button type="submit" class="btn-primary ml-1">
+                                Chỉnh sửa
+                            </button>
+                        </a>
+                        <form
+                            action="{{ url_for('views.delete_product_route', product_id=product.productid) }}"
+                            method="post"
+                            style="display: inline"
+                        >
                             <button
-                                class="bg-red-500 text-white px-2 py-1 rounded"
+                                type="submit"
+                                class="btn-danger"
+                                onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')"
                             >
                                 Xóa
                             </button>
-                        </td>
-                    </tr>
-                    <tr class="border-t">
-                        <td class="py-4 flex items-center">
-                            <img
-                                alt="Product image of Máy Bơm Chim Hộ Gia Đình"
-                                class="w-30 h-30 mr-4"
-                                height="50"
-                                src="https://storage.googleapis.com/a1aa/image/f9VzwNO3nixFJsGA2Cvk5gSWq9ZrQh_g1HpM7SWzuBU.jpg"
-                                width="50"
-                            />
-                            <div>
-                                <div>Máy Bơm Chim Hộ</div>
-                                <div>Gia Đình</div>
-                            </div>
-                        </td>
-                        <td class="py-4">
-                            Mô tả sản phẩm Máy Bơm Chim Hộ Gia Đình
-                        </td>
-                        <td class="py-4">1,599,000 VNĐ</td>
-                        <td class="py-4">
-                            <select class="border border-gray-300 rounded p-1">
-                                <option>Đỏ</option>
-                                <option>Xanh</option>
-                                <option>Vàng</option>
-                            </select>
-                        </td>
-                        <td class="py-4">
-                            <select class="border border-gray-300 rounded p-1">
-                                <option>S</option>
-                                <option>M</option>
-                                <option>L</option>
-                                <option>XL</option>
-                            </select>
-                        </td>
-                        <td class="py-4">
-                            <input
-                                class="w-12 border border-gray-300 rounded p-1 text-center"
-                                type="number"
-                                value="2"
-                            />
-                        </td>
-                        <td class="py-4">
-                            <button
-                                class="bg-red-500 text-white px-2 py-1 rounded"
-                            >
-                                Xóa
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %} {% else %}
+                <tr>
+                    <td colspan="6" class="empty-message">
+                        Không có sản phẩm nào trong cửa hàng.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <tfoot>
+            <tr>
+                <!-- colspan=5 để gộp các cột hình, tên, giá, màu, số lượng -->
+                <td colspan="5" class="text-right font-semibold">Doanh thu:</td>
+                <td class="font-semibold">
+                    {{ "{:,.0f}".format(income) or 0 }} VNĐ
+                </td>
+            </tr>
+        </tfoot>
     </div>
-</body>
+    {% else %}
+    <div class="shop-section">
+        <h2>Bạn chưa có cửa hàng</h2>
+        <p>Hãy đăng ký cửa hàng của bạn để bắt đầu bán hàng.</p>
+        <a href="{{ url_for('views.reg_shop') }}" class="bg-blue-500 text-white"
+            >Đăng ký cửa hàng</a
+        >
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

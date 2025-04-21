@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Chỉnh sửa số lượng{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/update_product.css') }}">
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+  <div class="bg-white rounded-lg shadow p-6 max-w-lg mx-auto">
+    <h2 class="text-2xl font-semibold mb-4">Chỉnh sửa số lượng</h2>
+
+    <p class="mb-2">
+      <span class="font-medium">Sản phẩm:</span>
+      {{ product.description or product.name or "Không rõ tên" }}
+    </p>
+    <p class="mb-4">
+      <span class="font-medium">Số lượng hiện tại: </span>
+      {{ product.quantity if product.quantity is not none else 0 }}
+    </p>
+
+    <form
+      action="{{ url_for('views.update_product_route', product_id=product.productid) }}"
+      method="POST"
+    >
+      <label for="quantity" class="block mb-2 font-medium">Nhập số lượng (+ / -):</label>
+      <input
+        id="quantity"
+        name="quantity"
+        type="number"
+        step="1"
+        placeholder="Ví dụ: 5 hoặc -3"
+        class="w-[90%] bg-white border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring"
+        required
+      />
+
+      <div class="flex justify-end space-x-2">
+        <a href="{{ url_for('views.shop_manager') }}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"> Hủy </a>
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"> Lưu thay đổi </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

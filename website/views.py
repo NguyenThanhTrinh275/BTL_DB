@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from website.models import get_products, get_product_by_id, get_cart, get_user_info, get_user_addresses, add_to_cart_func, add_user_address, delete_user_address, update_user_address, set_default_address, delete_from_cart_func, create_order, add_order_detail, update_vendee_spending, update_vender_income, update_product_stock, get_vender_id_by_product, get_shops_with_products, get_filtered_products
+from .models import *
 from decimal import Decimal
 
 views = Blueprint('views', __name__)
@@ -363,11 +363,113 @@ def payment():
 
 
 
-@views.route('/shop_manager')
+# Kiểm tra tồn tại của shop và đăng kí shop
+@views.route('/shop_manager', methods=['GET', 'POST'])
 def shop_manager():
-    # if 'user_id' not in session:
-    #     flash('Vui lòng đăng nhập để quản lý cửa hàng', 'error')
-    #     return redirect(url_for('auth.login'))
-    # Logic quản lý cửa hàng sẽ được thêm sau
-    return render_template('shop_manager.html')
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Vui lòng đăng nhập để quản lý cửa hàng', 'error')
+        return redirect(url_for('auth.login'))
+
+    shop = get_shop_by_user_id(user_id)
+
+    if shop:
+        products = get_products_by_userid(user_id)
+        income = get_seller_income(user_id)
+        return render_template('shop_manager.html', shop=shop, products=products, income=income)
+    return render_template('shop_manager.html', shop=None)
+
+# Đăng ký cửa hàng
+@views.route('/reg_shop', methods=['GET', 'POST'])
+def reg_shop():
+    user_id = session.get('user_id')
+
+    if request.method == 'POST':
+        name = request.form['name']
+        tax_number = request.form['tax_number']
+        address = request.form['address']
+        phone_num = request.form['phone_number']
+        income = 0
+
+        shop_id = reg_shop_func(user_id, name, address, income, tax_number, phone_num)
+        if shop_id:
+            flash('Đăng ký cửa hàng thành công', 'success')
+            return redirect(url_for('views.shop_manager'))
+        else:
+            flash('Đăng ký cửa hàng thất bại', 'error')
+
+    return render_template('reg_shop.html')
+
+# Đăng ký sản phẩm
+@views.route('/reg_products', methods=['GET', 'POST'])
+def reg_products():
+    # product_id = request.args.get('product_id', type=int) 
+    
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+
+        description = request.form['product_name']
+        type = request.form['category']
+        pic_text = request.form['variant_image[]']
+        colors = request.form['variant_color[]']
+        size = request.form['variant_size[]']
+        price = request.form['variant_price[]']
+        stock_quantity = request.form['variant_quantity[]']
+
+        shop_id = get_shop_id_by_user_id(user_id)
+        if not description or not type or not pic_text or not colors or not size or not price or not stock_quantity:
+            return render_template('reg_products.html') 
+
+        product_id = create_product(shop_id, type, description, pic_text, colors, size, price, stock_quantity)
+        if product_id:
+            flash('Sản phẩm đăng ký thành công', 'success')
+            return redirect(url_for('views.shop_manager'))  
+        else:
+            flash('Đăng ký sản phẩm thất bại', 'error')
+
+    return render_template('reg_products.html')
+
+# Hàm update sản phẩm
+@views.route('/update_product/<int:product_id>', methods=['GET', 'POST'])
+def update_product_route(product_id):
+    variants = get_variants_by_product_id(product_id)
+    current_qty = sum(v['quantity'] for v in variants) if variants else 0
+
+    if request.method == 'POST':
+        quantity = request.form.get('quantity', type=int)
+        if quantity is None:
+            flash('Vui lòng nhập giá trị số hợp lệ.', 'error')
+            return redirect(url_for('views.update_product_route', product_id=product_id))
+        new_qty = current_qty + quantity
+        if new_qty < 0:
+            flash(f'Kho chỉ còn {current_qty} sản phẩm.', 'error')
+            return redirect(url_for('views.update_product_route', product_id=product_id))
+        try:
+            update_product(product_id, new_qty)
+            flash(f'Cập nhật số lượng thành công: {current_qty} → {new_qty}', 'success')
+            return redirect(url_for('views.shop_manager'))
+        except Exception as e:
+                flash(f'Cập nhật thất bại: {e}', 'error')
+        return redirect(url_for('views.shop_manager'))
+
+    product = get_product_by_id_func(product_id)
+    return render_template('update_product.html', product=product, current_qty=current_qty)
+
+# Hàm xoá sản phẩm 
+@views.route('/delete_product/<int:product_id>', methods=['POST'])
+def delete_product_route(product_id):
+    try:
+        # Xóa sản phẩm từ database
+        result = delete_product(product_id)  # Hàm này sẽ xóa sản phẩm từ DB
+        if result:
+            flash('Sản phẩm đã được xóa thành công!', 'success')
+        else:
+            flash('Có lỗi xảy ra khi xóa sản phẩm!', 'error')
+
+        return redirect(url_for('views.shop_manager '))  # Quay lại trang quản lý sản phẩm
+    except Exception as e:
+        flash(f'Xoá thất bại: {str(e)}', 'error')
+        return redirect(url_for('views.shop_manager'))
+
+
 
