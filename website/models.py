@@ -750,7 +750,32 @@ def get_filtered_products(product_types=None, shop_ids=None):
 
 
 
-# hàm lấy BIẾN THỂ của sản phẩm
+
+
+
+# Hàm lấy hình ảnh đăng ký của sản phẩm
+def get_product_image(product_id):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT Images
+            FROM PRODUCT_IMAGES
+            WHERE ProductID = %s
+            LIMIT 1
+        """, (product_id,))
+
+        image = cur.fetchone()
+        return image
+    
+    except Exception as e:
+        print(f"Error fetching product image: {e}")
+        return 'default_image.jpg'
+    finally:
+        close_db_connection(conn, cur)
+
+# Hàm lấy BIẾN THỂ của sản phẩm
 def get_variants_by_product_id(product_id):
     conn = get_db_connection()
     if not conn:
@@ -790,33 +815,64 @@ def get_products_by_userid(user_id):
         return None
     try:
         cur = conn.cursor()
+        # Lấy ShopID từ user_id
         cur.execute("SELECT ShopID FROM shop WHERE UserID = %s", (user_id,))
         shop = cur.fetchone()
         if not shop:
-            return None
+            return []
 
         shop_id = shop['shopid']
 
+        # Truy vấn sản phẩm, nhóm theo ProductID
         cur.execute("""
-            SELECT p.ProductID, 
-                    p.Description AS name, 
-                    pv.Price AS price,
-                    (SELECT array_agg(pv2.Color)
-                    FROM PRODUCT_VARIANT pv2
-                    WHERE pv2.ProductID = p.ProductID
-                    AND pv2.StockQuantity > 0
-                    ) AS colors,
-                    pv.StockQuantity AS quantity, 
-                   (SELECT pi.Images FROM PRODUCT_IMAGES pi WHERE pi.ProductID = p.ProductID LIMIT 1) AS image
+            SELECT DISTINCT ON (p.ProductID)
+                p.ProductID AS productid,
+                p.Description AS name,
+                (SELECT pi.Images 
+                 FROM PRODUCT_IMAGES pi 
+                 WHERE pi.ProductID = p.ProductID 
+                 LIMIT 1) AS image
             FROM PRODUCT p
-            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
-            WHERE p.ShopID = %s AND pv.StockQuantity > 0
+            WHERE p.ShopID = %s
         """, (shop_id,))
-    
         products = cur.fetchall()
-        return products
+
+        # Với mỗi sản phẩm, lấy danh sách biến thể (variants)
+        result = []
+        for product in products:
+            product_id = product['productid']
+            # Lấy variants (màu sắc, kích thước, giá, số lượng)
+            cur.execute("""
+                SELECT 
+                    pv.Color AS color,
+                    pv."Size" AS size,
+                    pv.Price AS price,
+                    pv.StockQuantity AS quantity,
+                    pv.Image AS image
+                FROM PRODUCT_VARIANT pv
+                WHERE pv.ProductID = %s AND pv.StockQuantity > 0
+            """, (product_id,))
+            variants = cur.fetchall()
+
+            product_dict = {
+                'productid': product['productid'],  # Sử dụng 'id' để nhất quán với các template
+                'name': product['name'],
+                'image': product['image'] if product['image'] else 'default.png',
+                'variants': [
+                    {
+                        'color': variant['color'],
+                        'size': variant['size'],
+                        'price': float(variant['price']),  # Chuyển Decimal thành float để dễ xử lý
+                        'quantity': variant['quantity']
+                    }
+                    for variant in variants
+                ]
+            }
+            result.append(product_dict)
+
+        return result
     except Exception as e:
-        print(f"Error fetching producst: {e}")
+        print(f"Error fetching products: {e}")
         return []
     finally:
         close_db_connection(conn, cur)
@@ -952,6 +1008,25 @@ def create_product(shop_id, type, description, pic_text, color, size, price, sto
             (color, size, product_id, price, stock_quantity, pic_text)
         )
 
+        if isinstance(pic_text, list):
+            for image in pic_text:
+                cur.execute(
+                    """
+                    INSERT INTO PRODUCT_IMAGES (ProductID, Images)
+                    VALUES (%s, %s);
+                    """, 
+                    (product_id, image)
+                )
+        else:
+            # Nếu pic_text không phải là danh sách, chỉ chèn một ảnh
+            cur.execute(
+                """
+                INSERT INTO PRODUCT_IMAGES (ProductID, Images)
+                VALUES (%s, %s);
+                """, 
+                (product_id, pic_text)
+            )
+
         conn.commit()
         return product_id  
     except Exception as e:
@@ -961,20 +1036,25 @@ def create_product(shop_id, type, description, pic_text, color, size, price, sto
     finally:
         close_db_connection(conn, cur)
 
-# Hàm update SỐ LƯỢNG sản phẩm
-def update_product(product_id, new_stock_quantity):
+# Hàm update BIẾN THỂ cho sản phẩm
+def update_product_func(product_id, new_pic, new_color, new_size, new_price, new_stock_quantity):
     conn = get_db_connection()
     if not conn:
         return None
     try:
         cur = conn.cursor()
-        
+
         cur.execute(
-            "UPDATE product_variant SET StockQuantity = %s WHERE ProductID = %s",
-            (new_stock_quantity, product_id)
-            )
+            """
+            INSERT INTO PRODUCT_VARIANT (Color, "Size", ProductID, Price, StockQuantity, Image) 
+            VALUES (%s, %s, %s, %s, %s, %s);
+            """, 
+            (new_color, new_size, product_id, new_price, new_stock_quantity, new_pic)
+        )
+
         conn.commit()
-        print(f'Cập nhật số lượng thành công!', 'success')
+        print(f'Cập nhật BIẾN THỂ thành công!', 'success')
+        return product_id
     except Exception as e:
         print(f'Cập nhật thất bại: {e}', 'error')
         conn.rollback()
@@ -982,8 +1062,8 @@ def update_product(product_id, new_stock_quantity):
     finally:
         close_db_connection(conn, cur)
 
-# Hàm xoá sản phẩm 
-def delete_product(product_id):
+# Hàm CHỈNH SỬA sản phẩm
+def modify_product_func(product_id, color, size, modified_quantity, modified_price):
     conn = get_db_connection()
     if not conn:
         return None
@@ -992,28 +1072,45 @@ def delete_product(product_id):
 
         cur.execute(
             """
-            DELETE FROM PRODUCT_VARIANT
-            WHERE ProductID = %s;
+            UPDATE PRODUCT_VARIANT
+            SET StockQuantity = %s, Price = %s
+            WHERE ProductID = %s AND Color = %s AND "Size" = %s;
             """,
-            (product_id,)
-        )
-        
-        cur.execute(
-            """
-            DELETE FROM PRODUCT
-            WHERE ProductID = %s;
-            """,
-            (product_id,)
+            (modified_quantity, modified_price, product_id, color, size)
         )
 
         conn.commit()
         return product_id
     except Exception as e:
-        print(f"Error deleting product: {e}")
+        print(f"Error modifying product: {e}")
         conn.rollback()
         return None
     finally:
         close_db_connection(conn, cur)
+
+# Hàm xoá BIẾN THỂ của sản phẩm
+def delete_variant_func(product_id, color, size):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor()
+
+        # Xóa biến thể khỏi bảng PRODUCT_VARIANT
+        cur.execute("""
+            DELETE FROM PRODUCT_VARIANT 
+            WHERE ProductID = %s AND Color = %s AND "Size" = %s
+        """, (product_id, color, size))
+
+        conn.commit()
+
+    except Exception as e:
+        print(f"Error deleting product variant: {e}")
+        conn.rollback()
+        raise e
+    finally:
+        close_db_connection(conn, cur)
+
 
 # Hàm HIỂN THỊ doanh thu
 def get_seller_income(user_id):

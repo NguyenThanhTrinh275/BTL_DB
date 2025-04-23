@@ -1,83 +1,208 @@
-/* Custom styles for modify.html */
 body {
     font-family: 'Inter', sans-serif;
     background-color: #f7fafc;
-    margin: 0;
-    padding: 0;
 }
 
-/* Khung chứa form chỉnh sửa */
-.update-container {
-    max-width: 600px;
-    margin: 3rem auto;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
     background-color: #ffffff;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.update-container h2 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #2d3748;
+.form-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    max-width: 1000px;
+    width: 100%;
+}
+
+.product-image {
+    width: 250px;
+    height: 250px;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.form-fields {
+    flex: 1;
+    max-width: 700px;
+}
+
+.form-group {
     margin-bottom: 1.5rem;
 }
 
-.update-container p {
-    font-size: 1rem;
-    color: #4a5568;
-    margin-bottom: 1rem;
-}
-
-.update-form label {
+.form-group label {
     display: block;
     font-weight: 500;
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
     color: #2d3748;
+    margin-bottom: 0.5rem;
+    text-align: left;
 }
 
-.update-form input[type="number"] {
-    width: 90%;
+.form-group input,
+.form-group select {
+    width: 100%;
     padding: 0.75rem;
     border: 1px solid #e2e8f0;
     border-radius: 0.25rem;
-    font-size: 1rem;
-    color: #2d3748;
-    margin-bottom: 1.5rem;
     background-color: #ffffff;
+    font-size: 0.9rem;
+    transition: all 0.2s ease-in-out;
 }
 
-/* Nút hành động */
-.update-actions {
+.form-group input[readonly] {
+    background-color: #f7fafc;
+    cursor: not-allowed;
+    color: #718096;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.1);
+    outline: none;
+}
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2397A3B6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.2rem;
+}
+
+.product-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.product-name-group {
+    flex: 1;
+}
+
+.add-variant-btn {
+    margin-left: 1rem;
+}
+
+.variants-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    table-layout: fixed;
+}
+
+.variants-table th,
+.variants-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.variants-table th {
+    font-weight: 600;
+    color: #2d3748;
+    background-color: #f7fafc;
+}
+
+.variants-table input,
+.variants-table select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.variants-table .action-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
 }
 
-.update-actions .btn-cancel,
-.update-actions .btn-save {
+.variants-table button {
     padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.25rem;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+    font-size: 0.85rem;
 }
 
-.update-actions .btn-cancel {
-    background-color: #e2e8f0;
-    color: #4a5568;
-}
-
-.update-actions .btn-cancel:hover {
-    background-color: #cbd5e0;
-}
-
-.update-actions .btn-save {
+.btn-primary {
     background-color: #3b82f6;
     color: #ffffff;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
 
-.update-actions .btn-save:hover {
+.btn-primary:hover {
     background-color: #2563eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+    background-color: #2563eb;
+}
+
+.btn-danger {
+    background-color: #e53e3e;
+    color: #ffffff;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-danger:hover {
+    background-color: #c53030;
+}
+
+h2 {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+select {
+    padding: 0.75rem; /* Thêm padding để dropdown dễ sử dụng */
+    font-size: 1rem; /* Đảm bảo font phù hợp */
+    border-radius: 0.25rem;
+    border: 1px solid #e2e8f0;
+}
+
+select:focus {
+    border-color: #3b82f6;
+}
+
+td {
+    text-align: center;
+}
+
+td select {
+    width: 80%;  /* Giảm bớt độ rộng của dropdown */
+}
+
+td, th {
+    vertical-align: middle;
 }

@@ -375,8 +375,12 @@ def shop_manager():
 
     if shop:
         products = get_products_by_userid(user_id)
+        for product in products:
+            product['variants'] = get_variants_by_product_id(product['productid'])
+            product['image'] = get_product_image(product['productid'])
+
         income = get_seller_income(user_id)
-        return render_template('shop_manager.html', shop=shop, products=products, income=income)
+        return render_template('shop_manager.html', shop=shop,  products=products, income=income)
     return render_template('shop_manager.html', shop=None)
 
 # Đăng ký cửa hàng
@@ -391,7 +395,7 @@ def reg_shop():
         phone_num = request.form['phone_number']
         income = 0
 
-        shop_id = reg_shop_func(user_id, name, address, income, tax_number, phone_num)
+        shop_id = reg_shop(user_id, name, address, income, tax_number, phone_num)
         if shop_id:
             flash('Đăng ký cửa hàng thành công', 'success')
             return redirect(url_for('views.shop_manager'))
@@ -400,11 +404,10 @@ def reg_shop():
 
     return render_template('reg_shop.html')
 
+
 # Đăng ký sản phẩm
 @views.route('/reg_products', methods=['GET', 'POST'])
-def reg_products():
-    # product_id = request.args.get('product_id', type=int) 
-    
+def reg_products():    
     if request.method == 'POST':
         user_id = session.get('user_id')
 
@@ -429,47 +432,63 @@ def reg_products():
 
     return render_template('reg_products.html')
 
-# Hàm update sản phẩm
+# Cập nhật BIẾN THỂ sản phẩm
 @views.route('/update_product/<int:product_id>', methods=['GET', 'POST'])
 def update_product_route(product_id):
+    product = get_product_by_id(product_id)
+    if request.method == 'POST':
+        new_pic = request.form.get('variant_image[]')
+        new_color = request.form.get('variant_color[]')
+        new_size = request.form.get('variant_size[]')
+        new_price = request.form.get('variant_price[]', type=int)
+        new_stock_quantity = request.form.get('variant_quantity[]', type=int)
+        
+        if not new_price or not new_color or not new_size or not new_stock_quantity:
+            return render_template('update_product.html', product=product)
+        
+        new_variant = update_product_func(product_id, new_pic, new_color, new_size, new_price, new_stock_quantity)
+        if new_variant:
+            print(f'Thêm BIẾN THỂ thành công', 'success')
+            return redirect(url_for('views.shop_manager'))  
+        else:
+            print(f'Đăng ký sản phẩm thất bại', 'error')
+
+    return render_template('update_product.html', product=product)
+
+# Hàm CHỈNH SỬA sản phẩm
+@views.route('modify/<int:product_id>', methods=['GET', 'POST'])
+def modify_product_route(product_id):
+    product = get_product_by_id(product_id)
     variants = get_variants_by_product_id(product_id)
-    current_qty = sum(v['quantity'] for v in variants) if variants else 0
+    print(product)
+    if request.method == 'POST':
+        for variant in variants:
+
+            modified_quantity = request.form.get(f"stock_quantity_{variant['color']}_{variant['size']}", variant['quantity'])
+            modified_price = request.form.get(f"price_{variant['color']}_{variant['size']}", variant['price'])
+
+            if int(modified_quantity) < 0 or float(modified_price) < 0:
+                flash("Không thể là giá trị âm", 'error')
+                return redirect(url_for('views.modify_product_route', product_id=product_id))
+
+            modify_product_func(product_id, variant['color'], variant['size'], modified_quantity, modified_price)
+        
+        return redirect(url_for('views.shop_manager'))
+    return render_template('modify.html', product=product, variants=variants)
+
+# Hàm xoá BIẾN THỂ sản phẩm 
+@views.route('/delete_product/<int:product_id>', methods=['GET', 'POST'])
+def delete_product_route(product_id):
+    product = get_product_by_id(product_id)
+    variants = get_variants_by_product_id(product_id)
 
     if request.method == 'POST':
-        quantity = request.form.get('quantity', type=int)
-        if quantity is None:
-            flash('Vui lòng nhập giá trị số hợp lệ.', 'error')
-            return redirect(url_for('views.update_product_route', product_id=product_id))
-        new_qty = current_qty + quantity
-        if new_qty < 0:
-            flash(f'Kho chỉ còn {current_qty} sản phẩm.', 'error')
-            return redirect(url_for('views.update_product_route', product_id=product_id))
-        try:
-            update_product(product_id, new_qty)
-            flash(f'Cập nhật số lượng thành công: {current_qty} → {new_qty}', 'success')
-            return redirect(url_for('views.shop_manager'))
-        except Exception as e:
-                flash(f'Cập nhật thất bại: {e}', 'error')
+        selected_variants = request.form.getlist('delete_variant') 
+
+        if selected_variants:
+            for variant in selected_variants:
+                color, size = variant.split('|')
+                delete_variant_func(product_id, color, size)
+
         return redirect(url_for('views.shop_manager'))
-
-    product = get_product_by_id_func(product_id)
-    return render_template('update_product.html', product=product, current_qty=current_qty)
-
-# Hàm xoá sản phẩm 
-@views.route('/delete_product/<int:product_id>', methods=['POST'])
-def delete_product_route(product_id):
-    try:
-        # Xóa sản phẩm từ database
-        result = delete_product(product_id)  # Hàm này sẽ xóa sản phẩm từ DB
-        if result:
-            flash('Sản phẩm đã được xóa thành công!', 'success')
-        else:
-            flash('Có lỗi xảy ra khi xóa sản phẩm!', 'error')
-
-        return redirect(url_for('views.shop_manager '))  # Quay lại trang quản lý sản phẩm
-    except Exception as e:
-        flash(f'Xoá thất bại: {str(e)}', 'error')
-        return redirect(url_for('views.shop_manager'))
-
-
-
+    return render_template('delete.html', product=product, variants=variants)

@@ -1,0 +1,197 @@
+/* Cấu hình toàn bộ trang */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9fafb;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* Chỉnh sửa form */
+.form-container {
+    display: flex;
+    gap: 2rem;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.form-fields {
+    flex: 1;
+    padding: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    background-color: #ffffff;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-group input[readonly] {
+    background-color: #f7fafc;
+    cursor: not-allowed;
+    color: #718096;
+}
+
+/* Cấu trúc các nút */
+.btn-primary {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-radius: 0.25rem;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #e2e8f0;
+    color: #2d3748;
+    border-radius: 0.25rem;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+/* Hình ảnh */
+.product-image {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+}
+
+/* Các bảng và ô input */
+.variants-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+}
+
+.variants-table th,
+.variants-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.variants-table th {
+    background-color: #f7fafc;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.variants-table td {
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.variants-table select,
+.variants-table input {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+}
+
+/* Chỉnh sửa các button hành động trong bảng */
+.variants-table .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* Chỉnh sửa các nút hành động trong bảng */
+.variants-table button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+/* Chỉnh sửa biểu mẫu nút hủy */
+a.btn-secondary {
+    background-color: #e2e8f0;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+a.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+/* Thêm điều chỉnh cho các dropdown */
+select {
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e2e8f0;
+    font-size: 1rem;
+}
+
+select:focus {
+    border-color: #3b82f6;
+}
+
+/* Định dạng các lỗi */
+.error-message {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}

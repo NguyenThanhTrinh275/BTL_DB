@@ -1,0 +1,57 @@
+{% extends "base.html" %} {% block title %}Chỉnh sửa thông số{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/modify.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h2 class="text-2xl font-semibold mb-4">Chỉnh sửa sản phẩm</h2>
+
+    <form method="POST" action="{{ url_for('views.modify_product_route', product_id=product['id']) }}">
+        <h3 class="text-xl">{{ product['name'] }}</h3>
+
+        <table class="variants-table">
+            <thead>
+                <tr>
+                    <th>Màu Sắc</th>
+                    <th>Size</th>
+                    <th>Số Lượng</th>
+                    <th>Giá</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for variant in variants %}
+                <tr>
+                    <!-- Màu sắc (Readonly) -->
+                    <td>
+                        <input type="text" value="{{ variant['color'] }}" readonly />
+                    </td>
+                    <!-- Size (Readonly) -->
+                    <td>
+                        <input type="text" value="{{ variant['size'] }}" readonly />
+                    </td>
+                    <!-- Số lượng (Chỉnh sửa) -->
+                    <td>
+                        <input type="number" name="stock_quantity_{{ variant['color'] }}_{{ variant['size'] }}" 
+                               value="{{ variant['quantity'] }}" />
+                    </td>
+                    <!-- Giá (Chỉnh sửa) -->
+                    <td>
+                        <input type="number" name="price_{{ variant['color'] }}_{{ variant['size'] }}" 
+                               value="{{ variant['price'] }}" />
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-group">
+            <button type="submit" class="btn-primary">Lưu thay đổi</button>
+            <a href="{{ url_for('views.shop_manager') }}" class="btn-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,97 +1,81 @@
-{% extends "base.html" %} {% block title %}Trang Bán Hàng{% endblock %} {% block
-extra_css %}
-<link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='styles/shop_manager.css') }}"
-/>
+{% extends "base.html" %}
+{% block title %}Trang Bán Hàng{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/shop_manager.css') }}" />
 <script src="https://cdn.tailwindcss.com"></script>
-{% endblock %} {% block content %}
+{% endblock %}
+
+{% block content %}
 <div class="container">
     {% if shop %}
     <div class="shop-section">
         <h2>Sản phẩm của cửa hàng</h2>
         <p>Danh sách sản phẩm của bạn.</p>
-        <a
-            href="{{ url_for('views.reg_products') }}"
-            class="bg-blue-500 text-white"
-            >Đăng ký sản phẩm</a
-        >
+        <a href="{{ url_for('views.reg_products') }}" class="bg-blue-500 text-white">Đăng ký sản phẩm</a>
 
         <table class="products-table">
             <thead>
                 <tr>
-                    <th style="width: 20%">Hình Ảnh</th>
-                    <th style="width: 15%">Tên Sản Phẩm</th>
-                    <th style="width: 15%">Giá</th>
-                    <th style="width: 20%">Màu Sắc</th>
-                    <th style="width: 10%">Số Lượng</th>
-                    <th style="width: 15%">Hành Động</th>
+                    <th style="width: 15%;">Hình Ảnh</th>
+                    <th style="width: 13%;">Tên Sản Phẩm</th>
+                    <th style="width: 13%;">Màu Sắc</th>
+                    <th style="width: 13%;">Size</th>
+                    <th style="width: 12%;">Số Lượng</th>
+                    <th style="width: 12%;">Giá</th>
+                    <th style="width: 22%;">Hành Động</th>
                 </tr>
             </thead>
             <tbody>
-                {% if products and products|length > 0 %} {% for product in
-                products %}
+                {% if products and products|length > 0 %}
+                {% for product in products %}
                 <tr>
-                    <td>
-                        <img
-                            src="{{ product.image if product.image else '#' }}"
-                            alt="Product image"
-                        />
-                    </td>
+                    <td><img src="{{ product.image }}" id="product_image_{{ product.product_id }}" /></td>
                     <td>{{ product.name }}</td>
-                    <td>{{ "{:,.0f}".format(product.price) }} VNĐ</td>
                     <td>
-                        <select name="color">
-                            <option value="">Chọn màu</option>
-                            {% for color in product.colors %}
-                            <option value="{{ color }}">{{ color }}</option>
+                        <select name="color" id="color_{{ product['productid'] }}" onchange="updateVariant({{ product['productid'] }})">
+                            <option value="">Chọn màu</option>  
+                            {% for variant in product['variants'] %}
+                                <option value="{{ variant['color'] }}">{{ variant['color'] }}</option>
                             {% endfor %}
                         </select>
                     </td>
                     <td>
-                        {{ product.quantity if product.quantity is not none else
-                        '0' }}
-                    </td>
+                        <select name="size" id="size_{{ product['productid'] }}" onchange="updateVariant({{ product['productid'] }})">
+                            <option value="">Chọn size</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                        </select>
+                    </td>   
+                    <td id="quantity_{{ product['productid'] }}">0</td>
+                    <td id="price_{{ product['productid'] }}">0 VNĐ</td>
                     <td>
-                        <a
-                            href="{{ url_for('views.update_product_route', product_id=product.productid) }}"
-                            style="display: inline"
-                        >
-                            <button type="submit" class="btn-primary ml-1">
-                                Chỉnh sửa
-                            </button>
+                        <a href="{{ url_for('views.update_product_route', product_id=product.productid) }}"  style="display:inline">
+                            <button type="submit" class="btn-primary ml-1"> Cập nhật </button>
                         </a>
-                        <form
-                            action="{{ url_for('views.delete_product_route', product_id=product.productid) }}"
-                            method="post"
-                            style="display: inline"
-                        >
-                            <button
-                                type="submit"
-                                class="btn-danger"
-                                onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')"
-                            >
-                                Xóa
-                            </button>
-                        </form>
+                        <a href="{{ url_for('views.modify_product_route', product_id=product.productid) }}"  style="display:inline">
+                            <button type="submit" class="btn-primary ml-1"> Chỉnh sửa </button>
+                        </a>
+                        <a href="{{ url_for('views.delete_product_route', product_id=product.productid) }}"  style="display:inline">
+                            <button type="submit" class="btn-primary ml-1"> Xoá </button>
+                        </a>
                     </td>
                 </tr>
-                {% endfor %} {% else %}
+                {% endfor %}
+                {% else %}
                 <tr>
-                    <td colspan="6" class="empty-message">
-                        Không có sản phẩm nào trong cửa hàng.
-                    </td>
+                    <td colspan="6" class="empty-message">Không có sản phẩm nào trong cửa hàng.</td>
                 </tr>
                 {% endif %}
             </tbody>
+            
         </table>
         <tfoot>
             <tr>
-                <!-- colspan=5 để gộp các cột hình, tên, giá, màu, số lượng -->
-                <td colspan="5" class="text-right font-semibold">Doanh thu:</td>
-                <td class="font-semibold">
-                    {{ "{:,.0f}".format(income) or 0 }} VNĐ
-                </td>
+              <!-- colspan=5 để gộp các cột hình, tên, giá, màu, số lượng -->
+              <td colspan="5" class="text-right font-semibold">Doanh thu:</td>
+              <td class="font-semibold">{{ income or 0 }} VNĐ</td>
             </tr>
         </tfoot>
     </div>
@@ -99,10 +83,49 @@ extra_css %}
     <div class="shop-section">
         <h2>Bạn chưa có cửa hàng</h2>
         <p>Hãy đăng ký cửa hàng của bạn để bắt đầu bán hàng.</p>
-        <a href="{{ url_for('views.reg_shop') }}" class="bg-blue-500 text-white"
-            >Đăng ký cửa hàng</a
-        >
+        <a href="{{ url_for('views.reg_shop') }}" class="bg-blue-500 text-white">Đăng ký cửa hàng</a>
     </div>
     {% endif %}
 </div>
+
+<script>
+    // Chuyển dữ liệu variants thành JSON để sử dụng trong JavaScript
+    const productsVariants = {
+        {% for product in products %}
+        "{{ product['productid'] }}": {{ product.variants|tojson }},
+        {% endfor %}
+    };
+
+    function updateVariant(productid) {
+        const colorSelect = document.getElementById(`color_${productid}`);
+        const sizeSelect = document.getElementById(`size_${productid}`);
+        const quantityCell = document.getElementById(`quantity_${productid}`);
+        const priceCell = document.getElementById(`price_${productid}`);
+
+        const selectedColor = colorSelect.value;
+        const selectedSize = sizeSelect.value;
+
+        // Reset về 0 nếu không chọn đầy đủ màu và size
+        if (!selectedColor || !selectedSize) {
+            quantityCell.innerText = "0";
+            priceCell.innerText = "0 VNĐ";
+            return;
+        }
+
+        // Tìm biến thể phù hợp
+        const variants = productsVariants[productid];
+        const variant = variants.find(v => v.color === selectedColor && v.size === selectedSize);
+
+        if (variant) {
+            quantityCell.innerText = variant.quantity;
+            priceCell.innerText = variant.price + " VNĐ";
+        } else {
+            quantityCell.innerText = "0";
+            priceCell.innerText = "0 VNĐ";
+        }
+    }
+</script>
 {% endblock %}
+
+
+
