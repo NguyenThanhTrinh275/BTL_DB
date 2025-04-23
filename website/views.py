@@ -395,7 +395,7 @@ def reg_shop():
         phone_num = request.form['phone_number']
         income = 0
 
-        shop_id = reg_shop(user_id, name, address, income, tax_number, phone_num)
+        shop_id = reg_shop_func(user_id, name, address, income, tax_number, phone_num)
         if shop_id:
             flash('Đăng ký cửa hàng thành công', 'success')
             return redirect(url_for('views.shop_manager'))
