@@ -19,6 +19,7 @@ def home():
     if request.method == 'POST':
         selected_types = request.form.getlist('product_types') 
         selected_shops = request.form.getlist('shop_ids') 
+        sort_order = request.form.get('sort_order')
         selected_shops = [int(shop_id) for shop_id in selected_shops if shop_id.isdigit()]
         db_selected_types = [type_mapping[ptype] for ptype in selected_types if ptype in type_mapping]
 
@@ -27,6 +28,11 @@ def home():
                 product_types=db_selected_types if db_selected_types else None,
                 shop_ids=selected_shops if selected_shops else None
             )
+        
+        if sort_order == 'asc':
+            products = sorted(products, key=lambda x: x['price'])
+        elif sort_order == 'desc':
+            products = sorted(products, key=lambda x: x['price'], reverse=True)
 
     return render_template(
         'home.html',

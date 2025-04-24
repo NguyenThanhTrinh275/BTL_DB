@@ -12,40 +12,16 @@ extra_css %}
     <div class="flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <!-- <div class="mb-4">
-                <h2>Loại sản phẩm</h2>
-                <ul>
-                    <li>
-                        <input id="Ao" type="checkbox" />
-                        <label for="Ao"> Áo </label>
-                    </li>
-                    <li>
-                        <input id="Quan" type="checkbox" />
-                        <label for="Quan"> Quần </label>
-                    </li>
-                    <li>
-                        <input id="phukien" type="checkbox" />
-                        <label for="phukien"> Phụ kiện khác </label>
-                    </li>
-                </ul>
-            </div>
-            <div class="mb-4">
-                <h2>Cửa hàng</h2>
-                <ul>
-                    <li>
-                        <input id="dell" type="checkbox" />
-                        <label for="dell"> Dell </label>
-                    </li>
-                </ul>
-            </div> 
-
-            <div class="mb-4">
-                <button class="mt-2 bg-orange-500 text-white py-2 px-4 rounded">
-                    ÁP DỤNG
-                </button>
-            </div>-->
-
             <form method="POST" action="{{ url_for('views.home') }}">
+                <div class="mb-4">
+                    <h2>Sắp xếp theo giá</h2>
+                    <select name="sort_order" class="sort-select">
+                        <option value="">Không sắp xếp</option>
+                        <option value="asc">Giá tăng dần</option>
+                        <option value="desc">Giá giảm dần</option>
+                    </select>
+                </div>
+                <br />
                 <div class="mb-4">
                     <h2>Loại sản phẩm</h2>
                     <ul>

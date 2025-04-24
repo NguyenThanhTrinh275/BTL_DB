@@ -108,3 +108,19 @@
 .product-card .rating {
     color: #f59e0b;
 }
+
+.sort-select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #1a73e8;
+}
