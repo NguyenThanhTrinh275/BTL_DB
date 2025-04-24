@@ -98,7 +98,7 @@ extra_css %}
                     >
                         <img
                             alt="{{ product.name }}"
-                            src="{{ url_for('static', filename='images/default.png') or product.image }}"
+                            src="{{ product.image or url_for('static', filename='images/default.png') }}"
                         />
                         <div class="mt-2">
                             <h3>{{ product.name }}</h3>

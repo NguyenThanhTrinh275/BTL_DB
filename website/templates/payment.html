@@ -103,7 +103,7 @@ extra_css %}
                                 <td class="p-3">
                                     <div class="flex items-center">
                                         <img
-                                            src="{{ url_for('static', filename='images/default.png') or item.image }}"
+                                            src="{{ item.image or url_for('static', filename='images/default.png') }}"
                                             alt="{{ item.name }}"
                                             class="w-16 h-16 mr-4 rounded object-cover"
                                         />
@@ -149,9 +149,7 @@ extra_css %}
                                 >
                                     Phí vận chuyển
                                 </td>
-                                <td class="p-3 text-right font-bold">
-                                    30,000 VNĐ
-                                </td>
+                                <td class="p-3 text-right font-bold">0 VNĐ</td>
                             </tr>
                             <tr>
                                 <td
@@ -163,8 +161,7 @@ extra_css %}
                                 <td
                                     class="p-3 text-right font-bold text-lg text-blue-600"
                                 >
-                                    {{ "{:,.0f}".format(total_money + 30000) }}
-                                    VNĐ
+                                    {{ "{:,.0f}".format(total_money) }} VNĐ
                                 </td>
                             </tr>
                         </tfoot>
@@ -208,7 +205,7 @@ extra_css %}
                     <div class="text-gray-600">
                         <div class="font-medium">Tổng giá:</div>
                         <div class="text-2xl font-bold text-blue-600">
-                            {{ "{:,.0f}".format(total_money + 30000) }} VNĐ
+                            {{ "{:,.0f}".format(total_money) }} VNĐ
                         </div>
                     </div>
                     <button

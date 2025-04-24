@@ -24,7 +24,7 @@ block extra_css %}
             <div class="product-images">
                 <div class="main-image-container">
                     <img
-                        src="{{ url_for('static', filename='images/default.png') or product.images[0] }}"
+                        src="{{ product.images[0] or url_for('static', filename='images/default.png') }}"
                         alt="{{ product.name }}"
                         class="main-image"
                         id="main-image"
@@ -33,7 +33,7 @@ block extra_css %}
                 <div class="thumbnails">
                     {% for image in product.images %}
                     <img
-                        src="{{ url_for('static', filename='images/default.png') or image }}"
+                        src="{{ image or url_for('static', filename='images/default.png') }}"
                         alt="{{ product.name }} View"
                         class="thumbnail"
                     />

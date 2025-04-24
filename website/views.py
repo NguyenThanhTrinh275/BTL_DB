@@ -7,31 +7,21 @@ views = Blueprint('views', __name__)
 # Thêm route cho việc truy cập trang chủ
 @views.route('/', methods=['GET', 'POST'])
 def home():
-    # Danh sách loại sản phẩm tĩnh
     product_types = ['Áo', 'Quần', 'Phụ kiện khác']
-    # Ánh xạ giữa giá trị hiển thị và giá trị trong DB
     type_mapping = {
         'Áo': 'ao',
         'Quần': 'quan',
         'Phụ kiện khác': 'pk'
     }
-
-    # Lấy danh sách shop
     shops = get_shops_with_products()
-
-    # Mặc định hiển thị tất cả sản phẩm
     products = get_products()
 
     if request.method == 'POST':
-        # Lấy dữ liệu từ form
-        selected_types = request.form.getlist('product_types')  # Checkbox cho loại sản phẩm
-        selected_shops = request.form.getlist('shop_ids')  # Checkbox cho shop
+        selected_types = request.form.getlist('product_types') 
+        selected_shops = request.form.getlist('shop_ids') 
         selected_shops = [int(shop_id) for shop_id in selected_shops if shop_id.isdigit()]
-
-        # Chuyển đổi loại sản phẩm sang giá trị trong DB
         db_selected_types = [type_mapping[ptype] for ptype in selected_types if ptype in type_mapping]
 
-        # Lọc sản phẩm nếu có dữ liệu được chọn
         if db_selected_types or selected_shops:
             products = get_filtered_products(
                 product_types=db_selected_types if db_selected_types else None,
@@ -195,7 +185,6 @@ def add_to_cart(product_id):
     # Get form data
     choice = request.form.get('choice')
     quantity = int(request.form.get('quantity', 1))
-    price = Decimal(request.form.get('price', '0.00'))
 
     # Find the selected variant
     selected_variant = next((v for v in product['variants'] if v['choice'] == choice), None)
@@ -209,7 +198,7 @@ def add_to_cart(product_id):
         return redirect(url_for('views.product_detail', product_id=product_id))
 
     # Add to cart
-    success = add_to_cart_func(session['user_id'], product_id, choice, quantity, price)
+    success = add_to_cart_func(session['user_id'], product_id, choice, quantity)
     if success:
         flash('Đã thêm sản phẩm vào giỏ hàng', 'success')
     else:
@@ -244,7 +233,6 @@ def payment():
         flash('Vui lòng đăng nhập để thanh toán', 'error')
         return redirect(url_for('auth.login'))
     
-    # Lấy thông tin người dùng
     user_info = get_user_info(session['user_id'])
     if not user_info:
         flash('Không thể lấy thông tin người dùng', 'error')
@@ -289,39 +277,16 @@ def payment():
         if order_id:
             success = True
             for item in cart_items:
+                success = True
                 success = success and add_order_detail(
                     order_id=order_id,
                     product_id=item['product_id'],
                     color=item['color'],
                     size=item['size'],
-                    quantity=item['quantity'],
-                    total_money=item['total_money']
-                )
-                
-                if not success:
-                    flash('Lỗi khi thêm chi tiết đơn hàng', 'error')
-                    return redirect(url_for('views.payment'))
-                
-                success = success and update_product_stock(
-                    product_id=item['product_id'],
-                    color=item['color'],
-                    size=item['size'],
                     quantity=item['quantity']
                 )
-                
                 if not success:
-                    flash('Lỗi khi cập nhật số lượng tồn kho', 'error')
-                    return redirect(url_for('views.payment'))
-                
-                vender_id = get_vender_id_by_product(item['product_id'])
-                if vender_id:
-                    success = success and update_vender_income(
-                        vender_id=vender_id,
-                        amount=item['total_money']
-                    )
-                
-                if not success:
-                    flash('Lỗi khi cập nhật thu nhập của vender', 'error')
+                    flash('Lỗi khi thêm chi tiết đơn hàng', 'error')
                     return redirect(url_for('views.payment'))
                 
                 success = success and delete_from_cart_func(
@@ -330,19 +295,9 @@ def payment():
                     color=item['color'],
                     size=item['size']
                 )
-                
                 if not success:
-                    flash('Lỗi khi xóa sản phẩm khỏi giỏ hàng', 'error')
+                    print('Lỗi khi xóa sản phẩm khỏi giỏ hàng')
                     return redirect(url_for('views.payment'))
-            
-            success = success and update_vendee_spending(
-                user_id=session['user_id'],
-                amount=total_money + 30000
-            )
-            
-            if not success:
-                flash('Lỗi khi cập nhật tổng chi tiêu của người mua', 'error')
-                return redirect(url_for('views.payment'))
             
             flash('Đặt hàng thành công!', 'success')
             return redirect(url_for('views.home'))

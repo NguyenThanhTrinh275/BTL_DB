@@ -19,7 +19,6 @@ def close_db_connection(conn, cursor=None):
     if conn:
         conn.close()
 
-
 # Hàm đăng kí và đăng nhập tài khoản người dùng
 def check_email_exists(email):
     conn = get_db_connection()
@@ -27,8 +26,8 @@ def check_email_exists(email):
         return False
     try:
         cur = conn.cursor()
-        cur.execute("SELECT 1 FROM \"USER\" WHERE Email = %s", (email,))
-        exists = cur.fetchone() is not None
+        cur.execute("SELECT check_email_exists(%s)", (email,))
+        exists = cur.fetchone()['check_email_exists']
         return exists
     finally:
         close_db_connection(conn, cur)
@@ -41,41 +40,12 @@ def register_user(first_name, last_name, email, password, phone_number, date_of_
         cur = conn.cursor()
         # Thêm người dùng vào bảng USER
         cur.execute(
-            """
-            INSERT INTO "USER" (FirstName, LastName, Email, "Password", DateOfBirth)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING UserID
-            """,
-            (first_name, last_name, email, password, date_of_birth)
+            'CALL insert_user(%s, %s, %s, %s, %s, %s)',
+            (password, first_name, last_name, email, date_of_birth, None)
         )
-        user_id = cur.fetchone()['userid']
-        
-        # Thêm số điện thoại vào bảng USER_PHONE
-        cur.execute(
-            """
-            INSERT INTO USER_PHONE (UserID, PhoneNumber)
-            VALUES (%s, %s)
-            """,
-            (user_id, phone_number)
-        )
-        
-        # Thêm người dùng vào bảng NonAdmin
-        cur.execute(
-            """
-            INSERT INTO NonAdmin (UserID)
-            VALUES (%s)
-            """,
-            (user_id,)
-        )
-        
-        # Tạo CartID và thêm vào bảng VENDEE_AND_CART
-        cur.execute(
-            """
-            INSERT INTO VENDEE_AND_CART (UserID, TotalSpending, CartID)
-            VALUES (%s, %s, %s)
-            """,
-            (user_id, 0.00, user_id)  # CartID tạm thời dùng UserID
-        )
+        cur.execute('SELECT currval(pg_get_serial_sequence(\'"USER"\', \'userid\')) AS user_id')
+        user_id = cur.fetchone()['user_id']
+        cur.execute('CALL insert_user_phone(%s, %s)', (user_id, phone_number))
         
         conn.commit()
         return user_id
@@ -92,20 +62,11 @@ def login_user(email, password):
         return None
     try:
         cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT UserID, FirstName, LastName, Email
-            FROM "USER"
-            WHERE Email = %s AND "Password" = %s
-            """,
-            (email, password)
-        )
+        cur.execute("SELECT * FROM  login_user(%s, %s)", (email, password))
         user = cur.fetchone()
         return user
     finally:
         close_db_connection(conn, cur)
-
-
 
 
 # Hàm lấy danh sách sản phẩm (đã có từ trước, giữ nguyên)
@@ -115,32 +76,11 @@ def get_products():
         return []
     try:
         cur = conn.cursor()
-        cur.execute("""
-            SELECT DISTINCT ON (p.ProductID)
-                p.ProductID AS productid,
-                p.Description AS name,
-                (SELECT MIN(pv2.Price)
-                 FROM PRODUCT_VARIANT pv2
-                 WHERE pv2.ProductID = p.ProductID
-                 AND pv2.StockQuantity > 0) AS price,
-                (SELECT pi.Images 
-                 FROM PRODUCT_IMAGES pi 
-                 WHERE pi.ProductID = p.ProductID 
-                 LIMIT 1) AS image
-            FROM PRODUCT p
-            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
-            WHERE EXISTS (
-                SELECT 1
-                FROM PRODUCT_VARIANT pv3
-                WHERE pv3.ProductID = p.ProductID
-                AND pv3.StockQuantity > 0
-            )
-            ORDER BY p.ProductID
-        """)
+        cur.execute('SELECT * FROM get_products()')
         products = cur.fetchall()
         return [
             {
-                'id': product['productid'],
+                'id': product['product_id'],
                 'name': product['name'],
                 'price': product['price'],
                 'image': product['image']
@@ -169,29 +109,14 @@ def get_product_by_id(product_id):
         cur = conn.cursor()
 
         # Truy vấn sản phẩm và biến thể
-        cur.execute("""
-            SELECT 
-                p.ProductID AS productid,
-                p.Description AS name,
-                pv.Color || ', ' || pv."Size" AS choice,
-                pv.Price AS price,
-                pv.StockQuantity AS stock
-            FROM PRODUCT p
-            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
-            WHERE p.ProductID = %s AND pv.StockQuantity > 0
-            ORDER BY pv.Color, pv."Size"
-        """, (product_id,))
+        cur.execute('SELECT * FROM get_product_and_variants(%s)', (product_id,))
         variants = cur.fetchall()
 
         if not variants:
             return None
 
         # Truy vấn hình ảnh bằng UNION
-        cur.execute("""
-            SELECT Images AS image FROM PRODUCT_IMAGES WHERE ProductID = %s
-            UNION
-            SELECT Image AS image FROM PRODUCT_VARIANT WHERE ProductID = %s
-        """, (product_id, product_id))
+        cur.execute('SELECT * FROM get_product_images(%s)', (product_id,))
         images = cur.fetchall()
 
         # Xử lý danh sách hình ảnh
@@ -201,7 +126,7 @@ def get_product_by_id(product_id):
 
         # Cấu trúc kết quả
         product = {
-            'id': variants[0]['productid'],
+            'id': variants[0]['product_id'],
             'name': variants[0]['name'],
             'variants': [
                 {
@@ -217,14 +142,13 @@ def get_product_by_id(product_id):
 
     except Exception as e:
         print(f"Error fetching product by ID: {e}")
-        # Có thể ghi log lỗi thay vì chỉ in
         return None
 
     finally:
         close_db_connection(conn, cur)
 
 # Hàm thêm sản phẩm vào giỏ hàng
-def add_to_cart_func(user_id, product_id, choice, quantity, price):
+def add_to_cart_func(user_id, product_id, choice, quantity):
     conn = get_db_connection()
     if not conn:
         return False
@@ -242,31 +166,10 @@ def add_to_cart_func(user_id, product_id, choice, quantity, price):
         cart_id = cart['cartid']
 
         color, size = choice.split(', ')
-        # Kiểm tra xem biến thể đã tồn tại trong giỏ hàng chưa
-        cur.execute("""
-            SELECT Quantity, TotalMoney
-            FROM CART_CONTAIN_PRODUCT_VARIANT
-            WHERE CartID = %s AND ProductID = %s AND Color = %s AND "Size" = %s
-        """, (cart_id, product_id, color, size))
-        existing_item = cur.fetchone()
-
-        total_money = price * quantity
-        if existing_item:
-            # Cập nhật số lượng và tổng tiền
-            new_quantity = existing_item['quantity'] + quantity
-            new_total_money = price * new_quantity
-            cur.execute("""
-                UPDATE CART_CONTAIN_PRODUCT_VARIANT
-                SET Quantity = %s, TotalMoney = %s
-                WHERE CartID = %s AND ProductID = %s AND Color = %s AND "Size" = %s
-            """, (new_quantity, new_total_money, cart_id, product_id, color, size))
-        else:
-            # Thêm mới vào giỏ hàng
-            cur.execute("""
-                INSERT INTO CART_CONTAIN_PRODUCT_VARIANT (CartID, ProductID, Color, "Size", Quantity, TotalMoney)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (cart_id, product_id, color, size, quantity, total_money))
-
+        cur.execute(
+            'CALL insert_or_update_cart_product_variant(%s, %s, %s, %s, %s)',
+            (product_id, color, size, cart_id, quantity)
+        )
         conn.commit()
         return True
 
@@ -285,34 +188,18 @@ def get_cart(user_id):
         return []
     try:
         cur = conn.cursor()
-        cur.execute("""
-            SELECT 
-                cc.CartID,
-                cc.ProductID,
-                pv.image,
-                p.Description AS name,
-                cc.Color,
-                cc."Size" AS size,
-                cc.Quantity,
-                cc.TotalMoney,
-                pv.Price AS price
-            FROM CART_CONTAIN_PRODUCT_VARIANT cc
-            JOIN PRODUCT p ON cc.ProductID = p.ProductID
-            JOIN PRODUCT_VARIANT pv ON cc.ProductID = pv.ProductID AND cc.Color = pv.Color AND cc."Size" = pv."Size"
-            JOIN VENDEE_AND_CART vc ON cc.CartID = vc.CartID
-            WHERE vc.UserID = %s
-        """, (user_id,))
+        cur.execute('SELECT * FROM get_cart_items(%s)', (user_id,))
         items = cur.fetchall()
         return [
             {
-                'product_id': item['productid'],
+                'product_id': item['product_id'],
                 'name': item['name'],
                 'color': item['color'],
                 'size': item['size'],
-                'total_money': item['totalmoney'],
+                'total_money': item['total_money'],
                 'quantity': item['quantity'],
                 'image': item['image'],
-                'cart_id': item['cartid'],
+                'cart_id': item['cart_id'],
                 'price': item['price']
             }
             for item in items
@@ -330,12 +217,12 @@ def delete_from_cart_func(cart_id, product_id, color, size):
         return False
     try:
         cur = conn.cursor()
-        cur.execute("""
-            DELETE FROM CART_CONTAIN_PRODUCT_VARIANT
-            WHERE CartID = %s AND ProductID = %s AND Color = %s AND "Size" = %s
-        """, (cart_id, product_id, color, size))
+        cur.execute(
+            'CALL delete_cart_product_variant(%s, %s, %s, %s)',
+            (cart_id, product_id, color, size)
+        )
         conn.commit()
-        return cur.rowcount > 0  
+        return True
     except Exception as e:
         print(f"Error deleting from cart: {e}")
         conn.rollback()
@@ -350,25 +237,15 @@ def get_user_info(user_id):
         return None
     try:
         cur = conn.cursor()
-        cur.execute("""
-            SELECT 
-                u.FirstName,
-                u.LastName,
-                u.Email,
-                up.PhoneNumber,
-                u.DateOfBirth,
-                vc.TotalSpending
-            FROM "USER" u
-            JOIN USER_PHONE up ON u.UserID = up.UserID
-            JOIN VENDEE_AND_CART vc ON u.UserID = vc.UserID
-            WHERE u.UserID = %s
-        """, (user_id,))
+        cur.execute('SELECT * FROM get_user_by_id(%s)', (user_id,))
         user_info = cur.fetchone()
+        cur.execute('SELECT * FROM get_user_phones(%s)', (user_id,))
+        phones = cur.fetchall()
         return {
             'first_name': user_info['firstname'],
             'last_name': user_info['lastname'],
             'email': user_info['email'],
-            'phone_number': user_info['phonenumber'],
+            'phone_number': phones[0]['phone_number'] if phones else None,
             'date_of_birth': user_info['dateofbirth'],
             'total_spending': user_info['totalspending']
         }
@@ -385,11 +262,7 @@ def get_user_addresses(user_id):
         return []
     try:
         cur = conn.cursor()
-        cur.execute("""
-            SELECT HomeNumber, Street, District, City, Province, IsDefault
-            FROM VENDEE_ADDRESS
-            WHERE UserID = %s
-        """, (user_id,))
+        cur.execute('SELECT * FROM get_user_addresses(%s)', (user_id,))
         addresses = cur.fetchall()
         return [
             {
@@ -415,18 +288,10 @@ def add_user_address(user_id, home_number, street, district, city, province, is_
         return False
     try:
         cur = conn.cursor()
-        # Nếu địa chỉ mới được đặt làm mặc định, bỏ mặc định của các địa chỉ khác
-        if is_default:
-            cur.execute("""
-                UPDATE VENDEE_ADDRESS
-                SET IsDefault = FALSE
-                WHERE UserID = %s
-            """, (user_id,))
-        # Thêm địa chỉ mới
-        cur.execute("""
-            INSERT INTO VENDEE_ADDRESS (UserID, HomeNumber, Street, District, City, Province, IsDefault)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (user_id, home_number, street, district, city, province, is_default))
+        cur.execute(
+            'CALL add_user_address(%s, %s, %s, %s, %s, %s, %s)',
+            (user_id, home_number, street, district, city, province, is_default)
+        )
         conn.commit()
         return True
     except Exception as e:
@@ -443,10 +308,10 @@ def delete_user_address(user_id, home_number, street, district, city, province):
         return False
     try:
         cur = conn.cursor()
-        cur.execute("""
-            DELETE FROM VENDEE_ADDRESS
-            WHERE UserID = %s AND HomeNumber = %s AND Street = %s AND District = %s AND City = %s AND Province = %s
-        """, (user_id, home_number, street, district, city, province))
+        cur.execute(
+            'CALL delete_user_address(%s, %s, %s, %s, %s, %s)',
+            (user_id, home_number, street, district, city, province)
+        )
         conn.commit()
         return True
     except Exception as e:
@@ -463,11 +328,11 @@ def update_user_address(user_id, old_home_number, old_street, old_district, old_
         return False
     try:
         cur = conn.cursor()
-        cur.execute("""
-            UPDATE VENDEE_ADDRESS
-            SET HomeNumber = %s, Street = %s, District = %s, City = %s, Province = %s
-            WHERE UserID = %s AND HomeNumber = %s AND Street = %s AND District = %s AND City = %s AND Province = %s
-        """, (new_home_number, new_street, new_district, new_city, new_province, user_id, old_home_number, old_street, old_district, old_city, old_province))
+        cur.execute(
+            'CALL update_user_address(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (user_id, old_home_number, old_street, old_district, old_city, old_province,
+             new_home_number, new_street, new_district, new_city, new_province)
+        )
         conn.commit()
         return True
     except Exception as e:
@@ -484,18 +349,10 @@ def set_default_address(user_id, home_number, street, district, city, province):
         return False
     try:
         cur = conn.cursor()
-        # Bỏ mặc định của tất cả địa chỉ khác
-        cur.execute("""
-            UPDATE VENDEE_ADDRESS
-            SET IsDefault = FALSE
-            WHERE UserID = %s
-        """, (user_id,))
-        # Đặt địa chỉ này làm mặc định
-        cur.execute("""
-            UPDATE VENDEE_ADDRESS
-            SET IsDefault = TRUE
-            WHERE UserID = %s AND HomeNumber = %s AND Street = %s AND District = %s AND City = %s AND Province = %s
-        """, (user_id, home_number, street, district, city, province))
+        cur.execute(
+            'CALL set_default_address(%s, %s, %s, %s, %s, %s)',
+            (user_id, home_number, street, district, city, province)
+        )
         conn.commit()
         return True
     except Exception as e:
@@ -512,31 +369,11 @@ def create_order(user_id, cart_id, payment_method, total_money, total_products, 
         return None
     try:
         cur = conn.cursor()
-        total_price = total_money + 30000
         cur.execute(
-            """
-            INSERT INTO "ORDER" (
-                PaymentMethod, TotalMoney, TotalProduct,
-                HomeNumber, Street, District, City, Province, Subtotal, CartID, ShipByID, Status
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING OrderID
-            """,
-            (
-                payment_method,
-                total_price,
-                total_products,
-                home_number,
-                street,
-                district,
-                city,
-                province,
-                total_money,
-                cart_id,
-                11,
-                'Pending'
-            )
+            'CALL insert_order(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (payment_method, total_money, total_products, home_number, street, district, city, province, cart_id, None)
         )
+        cur.execute('SELECT currval(pg_get_serial_sequence(\'"ORDER"\', \'orderid\')) AS orderid')
         order_id = cur.fetchone()['orderid']
         conn.commit()
         return order_id
@@ -548,18 +385,15 @@ def create_order(user_id, cart_id, payment_method, total_money, total_products, 
         close_db_connection(conn, cur)
 
 # Hàm thêm chi tiết đơn hàng
-def add_order_detail(order_id, product_id, color, size, quantity, total_money):
+def add_order_detail(order_id, product_id, color, size, quantity):
     conn = get_db_connection()
     if not conn:
         return False
     try:
         cur = conn.cursor()
         cur.execute(
-            """
-            INSERT INTO ORDER_CONTAIN_PRODUCT_VARIANT (OrderID, ProductID, Color, "Size", Quantity)
-            VALUES (%s, %s, %s, %s, %s)
-            """,
-            (order_id, product_id, color, size, quantity)
+            'CALL insert_order_product_variant(%s, %s, %s, %s, %s)',
+            (product_id, color, size, order_id, quantity)
         )
         conn.commit()
         return True
@@ -570,89 +404,6 @@ def add_order_detail(order_id, product_id, color, size, quantity, total_money):
     finally:
         close_db_connection(conn, cur)
 
-# Hàm cập nhật tổng chi tiêu của người dùng
-def update_vendee_spending(user_id, amount):
-    conn = get_db_connection()
-    if not conn:
-        return False
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE VENDEE_AND_CART
-            SET TotalSpending = TotalSpending + %s
-            WHERE UserID = %s
-        """, (float(amount), user_id))
-        conn.commit()
-        return True
-    except Exception as e:
-        print(f"Error updating vendee spending: {e}")
-        conn.rollback()
-        return False
-    finally:
-        close_db_connection(conn, cur)
-
-# Hàm cập nhật thu nhập của người bán hàng
-def update_vender_income(vender_id, amount):
-    conn = get_db_connection()
-    if not conn:
-        return False
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE VENDER
-            SET Income = COALESCE(Income, 0) + %s
-            WHERE UserID = %s
-        """, (float(amount), vender_id))
-        conn.commit()
-        return True
-    except Exception as e:
-        print(f"Error updating vender income: {e}")
-        conn.rollback()
-        return False
-    finally:
-        close_db_connection(conn, cur)
-
-def update_product_stock(product_id, color, size, quantity):
-    conn = get_db_connection()
-    if not conn:
-        return False
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE PRODUCT_VARIANT
-            SET StockQuantity = StockQuantity - %s
-            WHERE ProductID = %s AND Color = %s AND "Size" = %s
-        """, (quantity, product_id, color, size))
-        conn.commit()
-        return cur.rowcount > 0
-    except Exception as e:
-        print(f"Error updating product stock: {e}")
-        conn.rollback()
-        return False
-    finally:
-        close_db_connection(conn, cur)
-
-def get_vender_id_by_product(product_id):
-    conn = get_db_connection()
-    if not conn:
-        return None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT v.UserID
-            FROM VENDER v
-            JOIN SHOP s ON v.UserID = s.UserID
-            JOIN PRODUCT p ON s.ShopID = p.ShopID
-            WHERE p.ProductID = %s
-        """, (product_id,))
-        vender = cur.fetchone()
-        return vender['userid'] if vender else None
-    except Exception as e:
-        print(f"Error fetching vender ID: {e}")
-        return None
-    finally:
-        close_db_connection(conn, cur)
-
 # Hàm lấy danh sách shop có sản phẩm
 def get_shops_with_products():
     conn = get_db_connection()
@@ -660,18 +411,7 @@ def get_shops_with_products():
         return []
     try:
         cur = conn.cursor()
-        cur.execute("""
-            SELECT DISTINCT s.ShopID, s."Name" AS name
-            FROM SHOP s
-            JOIN PRODUCT p ON s.ShopID = p.ShopID
-            WHERE EXISTS (
-                SELECT 1
-                FROM PRODUCT_VARIANT pv
-                WHERE pv.ProductID = p.ProductID
-                AND pv.StockQuantity > 0
-            )
-            ORDER BY s."Name"
-        """)
+        cur.execute('SELECT * FROM get_shops_with_products()')
         shops = cur.fetchall()
         return [
             {
@@ -693,47 +433,14 @@ def get_filtered_products(product_types=None, shop_ids=None):
         return []
     try:
         cur = conn.cursor()
-        query = """
-            SELECT DISTINCT ON (p.ProductID)
-                p.ProductID AS productid,
-                p.Description AS name,
-                (SELECT MIN(pv2.Price)
-                 FROM PRODUCT_VARIANT pv2
-                 WHERE pv2.ProductID = p.ProductID
-                 AND pv2.StockQuantity > 0) AS price,
-                (SELECT pi.Images 
-                 FROM PRODUCT_IMAGES pi 
-                 WHERE pi.ProductID = p.ProductID 
-                 LIMIT 1) AS image
-            FROM PRODUCT p
-            LEFT JOIN PRODUCT_VARIANT pv ON p.ProductID = pv.ProductID
-            JOIN SHOP s ON p.ShopID = s.ShopID
-            WHERE EXISTS (
-                SELECT 1
-                FROM PRODUCT_VARIANT pv3
-                WHERE pv3.ProductID = p.ProductID
-                AND pv3.StockQuantity > 0
-            )
-        """
-        params = []
-
-        # Thêm điều kiện lọc theo loại sản phẩm
-        if product_types:
-            query += ' AND p."Type" IN %s'
-            params.append(tuple(product_types))
-
-        # Thêm điều kiện lọc theo shop
-        if shop_ids:
-            query += " AND s.ShopID IN %s"
-            params.append(tuple(shop_ids))
-
-        query += " ORDER BY p.ProductID"
-
-        cur.execute(query, params)
+        cur.execute(
+            'SELECT * FROM get_filtered_products(%s, %s)',
+            (product_types if product_types else None, shop_ids if shop_ids else None)
+        )
         products = cur.fetchall()
         return [
             {
-                'id': product['productid'],
+                'id': product['product_id'],
                 'name': product['name'],
                 'price': product['price'],
                 'image': product['image']
@@ -745,6 +452,9 @@ def get_filtered_products(product_types=None, shop_ids=None):
         return []
     finally:
         close_db_connection(conn, cur)
+
+
+
 
 
 

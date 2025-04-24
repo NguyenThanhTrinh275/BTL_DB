@@ -30,7 +30,7 @@ extra_css %}
             <tr class="border-t">
                 <td class="product-info">
                     <img
-                        src="{{ url_for('static', filename='images/default.png') or item.image }}"
+                        src="{{ item.image or url_for('static', filename='images/default.png') }}"
                         alt="{{ item.name }}"
                     />
                     <div>
