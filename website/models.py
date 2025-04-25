@@ -157,13 +157,11 @@ def add_to_cart_func(user_id, product_id, choice, quantity):
         cur = conn.cursor()
 
         # Lấy CartID từ VENDEE_AND_CART
-        cur.execute("""
-            SELECT CartID FROM VENDEE_AND_CART WHERE UserID = %s
-        """, (user_id,))
-        cart = cur.fetchone()
+        cur.execute("SELECT get_cart_id_from_user_id(%s)", (user_id,))
+        cart = cur.fetchone()['get_cart_id_from_user_id']
         if not cart:
             return False
-        cart_id = cart['cartid']
+        cart_id = cart
 
         color, size = choice.split(', ')
         cur.execute(
@@ -453,7 +451,41 @@ def get_filtered_products(product_types=None, shop_ids=None):
     finally:
         close_db_connection(conn, cur)
 
-
+# Hàm kiểm tra số lượng sản phẩm trong giỏ hàng có đủ tồn kho hay không
+def check_stock_availability(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        # Lấy CartID từ VENDEE_AND_CART
+        cur.execute("SELECT get_cart_id_from_user_id(%s)", (user_id,))
+        cart = cur.fetchone()['get_cart_id_from_user_id']
+        if not cart:
+            print("Error: Không tìm thấy giỏ hàng")
+            return {'is_available': False, 'insufficient_items': [], 'error': 'Không tìm thấy giỏ hàng'}
+        cart_id = cart
+        # Lấy danh sách sản phẩm trong giỏ hàng và số lượng tồn kho
+        cur.execute("SELECT * FROM get_cart_items_with_stock(%s)", (cart_id,))
+        items = cur.fetchall()
+        
+        insufficient_items = []
+        for item in items:
+            if item['requested_quantity'] > item['available_quantity']:
+                insufficient_items.append({
+                    'product_name': item['product_name'],
+                    'color': item['color'],
+                    'size': item['size'],
+                    'requested': item['requested_quantity'],
+                    'available': item['available_quantity']
+                })
+        
+        return {'is_available': len(insufficient_items) == 0, 'insufficient_items': insufficient_items}
+    except Exception as e:
+        print(f"Error checking stock availability: {e}")
+        return False
+    finally:
+        close_db_connection(conn, cur)
 
 
 

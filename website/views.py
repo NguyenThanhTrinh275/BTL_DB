@@ -164,16 +164,31 @@ def cart():
         flash('Vui lòng đăng nhập để xem giỏ hàng', 'error')
         return redirect(url_for('auth.login'))
     
-    if request.method == 'POST' and request.form.get('action') == 'place_order':
-        cart_items = get_cart(session['user_id'])
-        if not cart_items:
-            flash('Giỏ hàng trống, không thể đặt hàng', 'error')
-            return redirect(url_for('views.cart'))
-        return redirect(url_for('views.payment'))
-    
     cart_items = get_cart(session['user_id'])
+    if not cart_items:
+        flash('Giỏ hàng trống, không thể đặt hàng', 'error')
+        return render_template('cart.html', cart_items=[], total_money=0, total_products=0)
+    
     total_money = sum(Decimal(str(item['total_money'])) for item in cart_items)
     total_products = sum(item['quantity'] for item in cart_items)
+    
+    if request.method == 'POST' and request.form.get('action') == 'place_order':
+        stock_check = check_stock_availability(session['user_id'])
+        if not stock_check:
+            flash('Lỗi khi kiểm tra tồn kho', 'error')
+            return redirect(url_for('views.cart'))
+        
+        if not stock_check['is_available']:
+            for item in stock_check['insufficient_items']:
+                flash(
+                    f"Sản phẩm {item['product_name']} ({item['color']}, {item['size']}) "
+                    f"chỉ còn {item['available']} đơn vị, bạn yêu cầu {item['requested']}",
+                    'error'
+                )
+            return redirect(url_for('views.cart'))
+        
+        return redirect(url_for('views.payment'))
+
     return render_template('cart.html', cart_items=cart_items, total_money=total_money, total_products=total_products)
 
 # Thêm route cho việc thêm sản phẩm vào giỏ hàng
@@ -256,7 +271,7 @@ def payment():
     
     total_money = sum(Decimal(str(item['total_money'])) for item in cart_items)
     total_products = sum(item['quantity'] for item in cart_items)
-    
+
     if request.method == 'POST':
         payment_method = request.form.get('payment')
         if not payment_method:
@@ -265,6 +280,19 @@ def payment():
         
         if not default_address:
             flash('Vui lòng chọn địa chỉ giao hàng mặc định', 'error')
+            return redirect(url_for('views.payment'))
+
+        stock_check = check_stock_availability(session['user_id'])
+        if not stock_check:
+            flash('Lỗi khi kiểm tra tồn kho', 'error')
+            return redirect(url_for('views.payment'))
+        if not stock_check['is_available']:
+            for item in stock_check['insufficient_items']:
+                flash(
+                    f"Sản phẩm {item['product_name']} ({item['color']}, {item['size']}) "
+                    f"chỉ còn {item['available']} đơn vị, bạn yêu cầu {item['requested']}",
+                    'error'
+                )
             return redirect(url_for('views.payment'))
 
         order_id = create_order(
