@@ -407,7 +407,7 @@ def update_product_route(product_id):
         if not new_price or not new_color or not new_size or not new_stock_quantity:
             return render_template('update_product.html', product=product)
         
-        new_variant = update_product_func(product_id, new_pic, new_color, new_size, new_price, new_stock_quantity)
+        new_variant = update_product_func(product_id, new_color, new_size, new_price, new_stock_quantity, new_pic)
         if new_variant:
             print(f'Thêm BIẾN THỂ thành công', 'success')
             return redirect(url_for('views.shop_manager'))  
@@ -421,7 +421,6 @@ def update_product_route(product_id):
 def modify_product_route(product_id):
     product = get_product_by_id(product_id)
     variants = get_variants_by_product_id(product_id)
-    print(product)
     if request.method == 'POST':
         for variant in variants:
 
