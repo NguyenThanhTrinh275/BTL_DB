@@ -477,7 +477,7 @@ def get_product_image(product_id):
         """, (product_id,))
 
         image = cur.fetchone()
-        return image
+        return image["images"]
     
     except Exception as e:
         print(f"Error fetching product image: {e}")
