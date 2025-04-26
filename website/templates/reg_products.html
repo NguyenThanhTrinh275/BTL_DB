@@ -12,7 +12,7 @@
         <h2 class="text-xl font-bold text-center mb-4">Thêm Sản Phẩm</h2>
         <div class="form-container">
             <!-- Ảnh sản phẩm cố định bên trái -->
-            <img src="#" alt="Ảnh sản phẩm" class="product-image" />
+            <input type="text" name="product_image" placeholder="Đường dẫn Ảnh Sản Phẩm"/>
             <!-- Các trường thuộc tính bên phải -->
             <div class="form-fields">
                 <div class="product-header">
@@ -20,7 +20,6 @@
                         <label for="product_name">Tên Sản Phẩm</label>
                         <input type="text" id="product_name" name="product_name" placeholder="Nhập tên sản phẩm" value="{{ product_name if product_name else '' }}" />
                     </div>
-                    <!--<button type="button" class="btn-secondary add-variant-btn" onclick="addVariantRow()">Thêm Biến Thể</button>-->
                 </div>
                 <div class="form-group">
                     <label for="category">Phân Loại</label>
@@ -45,7 +44,7 @@
                     </thead>
                     <tbody id="variants-tbody">
                         <tr>
-                            <td><input type="text" name="variant_image[]" placeholder="Đường dẫn hình ảnh" /></td>
+                            <td><input type="text" name="variant_image[]" placeholder="Đường dẫn Biến Thể" /></td>
                             <td><input type="text" name="variant_color[]" placeholder="Màu sắc" /></td>
                             <td>
                                 <select name="variant_size[]">

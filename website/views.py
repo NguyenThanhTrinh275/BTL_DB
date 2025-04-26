@@ -408,19 +408,20 @@ def reg_products():
     if request.method == 'POST':
         user_id = session.get('user_id')
 
+        product_img = request.form['product_image']
         description = request.form['product_name']
         type = request.form['category']
-        pic_text = request.form['variant_image[]']
+        variant_pic_text = request.form['variant_image[]']
         colors = request.form['variant_color[]']
         size = request.form['variant_size[]']
         price = request.form['variant_price[]']
         stock_quantity = request.form['variant_quantity[]']
 
         shop_id = get_shop_id_by_user_id(user_id)
-        if not description or not type or not pic_text or not colors or not size or not price or not stock_quantity:
+        if not product_img or not description or not type or not variant_pic_text or not colors or not size or not price or not stock_quantity:
             return render_template('reg_products.html') 
 
-        product_id = create_product(shop_id, type, description, pic_text, colors, size, price, stock_quantity)
+        product_id = create_product(shop_id, product_img, type, description, variant_pic_text, colors, size, price, stock_quantity)
         if product_id:
             flash('Sản phẩm đăng ký thành công', 'success')
             return redirect(url_for('views.shop_manager'))  
