@@ -599,14 +599,14 @@ def get_shop_id_by_user_id(user_id):
         close_db_connection(conn, cur)
 
 # Hàm đăng ký sản phẩm
-def create_product(shop_id, type, description, pic_text, color, size, price, stock_quantity):
+def create_product(shop_id, product_img, type, description, variant_pic_text, color, size, price, stock_quantity):
     conn = get_db_connection()
     if not conn:
         return None
     try:
         cur = conn.cursor()
 
-        cur.execute("CALL create_product(%s, %s, %s, %s, %s, %s, %s, %s)", (shop_id, type, description, pic_text, color, size, price, stock_quantity))
+        cur.execute("CALL create_product(%s, %s, %s, %s, %s, %s, %s, %s, %s)", (shop_id, product_img, type, description, variant_pic_text, color, size, price, stock_quantity))
 
         conn.commit()
         return True  
