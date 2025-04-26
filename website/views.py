@@ -20,20 +20,28 @@ def home():
         selected_types = request.form.getlist('product_types') 
         selected_shops = request.form.getlist('shop_ids') 
         sort_order = request.form.get('sort_order')
+
+        min_price = request.form.get('min_price', type=float, default=0)
+        max_price = request.form.get('max_price', type=float, default=999999999)
+
         selected_shops = [int(shop_id) for shop_id in selected_shops if shop_id.isdigit()]
         db_selected_types = [type_mapping[ptype] for ptype in selected_types if ptype in type_mapping]
 
-        if db_selected_types or selected_shops:
-            products = get_filtered_products(
-                product_types=db_selected_types if db_selected_types else None,
-                shop_ids=selected_shops if selected_shops else None
-            )
-        
-        if sort_order == 'asc':
-            products = sorted(products, key=lambda x: x['price'])
-        elif sort_order == 'desc':
-            products = sorted(products, key=lambda x: x['price'], reverse=True)
+        if min_price < 0 or max_price < 0:
+            flash('Giá không thể âm', 'error')
+            return redirect(url_for('views.home'))
+        if max_price < min_price:
+            flash('Giá tối đa phải lớn hơn giá tối thiểu', 'error')
+            return redirect(url_for('views.home'))
 
+        products = get_filtered_products(
+            product_types=db_selected_types if db_selected_types else None,
+            shop_ids=selected_shops if selected_shops else None,
+            min_price=min_price,
+            max_price=max_price,
+            sort_order=sort_order if sort_order in ['asc', 'desc'] else None
+        )
+        
     return render_template(
         'home.html',
         products=products,

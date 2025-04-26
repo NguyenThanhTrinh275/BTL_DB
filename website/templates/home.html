@@ -23,6 +23,28 @@ extra_css %}
                 </div>
                 <br />
                 <div class="mb-4">
+                    <h2>Khoảng giá</h2>
+                    <div class="price-range">
+                        <input
+                            type="number"
+                            name="min_price"
+                            placeholder="Giá tối thiểu"
+                            min="0"
+                            step="0.01"
+                            class="price-input"
+                        />
+                        <input
+                            type="number"
+                            name="max_price"
+                            placeholder="Giá tối đa"
+                            min="0"
+                            step="0.01"
+                            class="price-input"
+                        />
+                    </div>
+                </div>
+                <br />
+                <div class="mb-4">
                     <h2>Loại sản phẩm</h2>
                     <ul>
                         {% for type in product_types %}

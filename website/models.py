@@ -425,17 +425,27 @@ def get_shops_with_products():
         close_db_connection(conn, cur)
 
 # Hàm lọc sản phẩm theo loại và shop
-def get_filtered_products(product_types=None, shop_ids=None):
+def get_filtered_products(product_types=None, shop_ids=None, min_price=0, max_price=999999999, sort_order=None):
     conn = get_db_connection()
     if not conn:
         return []
     try:
         cur = conn.cursor()
+
+        conn.autocommit = False  # Tắt autocommit để quản lý giao dịch thủ công
+        cursor_name = 'product_cursor'
+
         cur.execute(
-            'SELECT * FROM get_filtered_products(%s, %s)',
-            (product_types if product_types else None, shop_ids if shop_ids else None)
+            'CALL filter_products_by_min_price(%s, %s, %s, %s, %s, %s)',
+            (product_types, shop_ids, min_price, max_price, sort_order, cursor_name)
         )
+
+        cur.execute(f'FETCH ALL FROM {cursor_name}')
         products = cur.fetchall()
+
+        cur.execute(f'CLOSE {cursor_name}')
+        conn.commit()
+
         return [
             {
                 'id': product['product_id'],

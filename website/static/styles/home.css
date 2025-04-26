@@ -124,3 +124,22 @@
     outline: none;
     border-color: #1a73e8;
 }
+
+.price-range {
+    display: flex;
+    gap: 8px;
+}
+
+.price-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #1a73e8;
+}
