@@ -420,7 +420,12 @@ def reg_products():
         shop_id = get_shop_id_by_user_id(user_id)
         if not product_img or not description or not type or not variant_pic_text or not colors or not size or not price or not stock_quantity:
             return render_template('reg_products.html') 
-
+        if int(stock_quantity) < 0:
+            flash('Vui lòng điền số lượng hợp lệ', 'error')
+            return render_template('reg_products.html') 
+        if float(price) < 0:
+            flash('Vui lòng điền giá tiền hợp lệ', 'error')
+            return render_template('reg_products.html') 
         product_id = create_product(shop_id, product_img, type, description, variant_pic_text, colors, size, price, stock_quantity)
         if product_id:
             flash('Sản phẩm đăng ký thành công', 'success')
