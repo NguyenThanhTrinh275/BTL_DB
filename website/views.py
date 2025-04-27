@@ -338,7 +338,6 @@ def shop_manager():
         products = get_products_by_userid(user_id)
         for product in products:
             product['variants'] = get_variants_by_product_id(product['productid'])
-            product['image'] = get_product_image(product['productid'])
 
         income = get_seller_income(user_id)
         return render_template('shop_manager.html', shop=shop,  products=products, income=income)

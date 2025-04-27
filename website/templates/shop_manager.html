@@ -16,21 +16,19 @@
         <table class="products-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">Hình Ảnh</th>
-                    <th style="width: 13%;">Tên Sản Phẩm</th>
-                    <th style="width: 13%;">Màu Sắc</th>
-                    <th style="width: 13%;">Size</th>
-                    <th style="width: 12%;">Số Lượng</th>
-                    <th style="width: 12%;">Giá</th>
-                    <th style="width: 22%;">Hành Động</th>
+                    <th style="width: 15%;">Tên Sản Phẩm</th>
+                    <th style="width: 15%;">Màu Sắc</th>
+                    <th style="width: 15%;">Size</th>
+                    <th style="width: 15%;">Số Lượng</th>
+                    <th style="width: 15%;">Giá</th>
+                    <th style="width: 25%;">Hành Động</th>
                 </tr>
             </thead>
             <tbody>
                 {% if products and products|length > 0 %}
                 {% for product in products %}
                 <tr>
-                    <td><img src="{{ product.image }}" id="product_image_{{ product.product_id }}" /></td>
-                    <td>{{ product.name }}</td>
+                    <td>{{ product['name'] }}</td>
                     <td>
                         <select name="color" id="color_{{ product['productid'] }}" onchange="updateVariant({{ product['productid'] }})">
                             <option value="">Chọn màu</option>  
