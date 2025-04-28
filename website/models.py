@@ -434,9 +434,8 @@ def get_filtered_products(product_types=None, shop_ids=None, min_price=0, max_pr
 
         conn.autocommit = False  # Tắt autocommit để quản lý giao dịch thủ công
         cursor_name = 'product_cursor'
-
         cur.execute(
-            'CALL filter_products_by_min_price(%s, %s, %s, %s, %s, %s)',
+            'CALL get_products_filtered(%s, %s, %s, %s, %s, %s)',
             (product_types, shop_ids, min_price, max_price, sort_order, cursor_name)
         )
 
