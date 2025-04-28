@@ -504,20 +504,6 @@ def check_stock_availability(user_id):
 
 
 
-# Hàm lấy hình ảnh đăng ký của sản phẩm
-def get_product_image(product_id):
-    conn = get_db_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT get_product_image(%s)", (product_id,))
-        image = cur.fetchone()
-        return image["images"]
-    except Exception as e:
-        print(f"Error fetching product image: {e}")
-        return 'default_image.jpg'
-    finally:
-        close_db_connection(conn, cur)
-
 # Hàm lấy BIẾN THỂ của sản phẩm
 def get_variants_by_product_id(product_id):
     conn = get_db_connection()
@@ -560,7 +546,7 @@ def get_products_by_userid(user_id):
             product_dict = {
                 'productid': product['productid'],
                 'name': product['name'],
-                'image': product['image'] if product['image'] else 'default.png',
+                'image': product['image'],
                 'variants': [
                     {
                         'color': variant['color'],
