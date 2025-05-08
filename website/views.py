@@ -16,6 +16,12 @@ def home():
     shops = get_shops_with_products()
     products = get_products()
 
+    selected_types = []
+    selected_shops = []
+    min_price = 0
+    max_price = 999999999
+    sort_order = None
+    # Lấy các giá trị lọc từ form (nếu có)
     if request.method == 'POST':
         selected_types = request.form.getlist('product_types') 
         selected_shops = request.form.getlist('shop_ids') 
@@ -24,6 +30,7 @@ def home():
         min_price = request.form.get('min_price', type=float, default=0)
         max_price = request.form.get('max_price', type=float, default=999999999)
 
+        # Kiểm tra và xử lý giá trị từ form
         selected_shops = [int(shop_id) for shop_id in selected_shops if shop_id.isdigit()]
         db_selected_types = [type_mapping[ptype] for ptype in selected_types if ptype in type_mapping]
 
@@ -34,6 +41,7 @@ def home():
             flash('Giá tối đa phải lớn hơn giá tối thiểu', 'error')
             return redirect(url_for('views.home'))
 
+        # Lọc sản phẩm theo các tiêu chí đã chọn
         products = get_filtered_products(
             product_types=db_selected_types if db_selected_types else None,
             shop_ids=selected_shops if selected_shops else None,
@@ -41,13 +49,20 @@ def home():
             max_price=max_price,
             sort_order=sort_order if sort_order in ['asc', 'desc'] else None
         )
-        
+    
+    # Trả lại các giá trị cần thiết cho template
     return render_template(
         'home.html',
         products=products,
         shops=shops,
-        product_types=product_types
+        product_types=product_types,
+        selected_types=selected_types,  # Truyền lại loại sản phẩm đã chọn
+        selected_shops=selected_shops,  # Truyền lại cửa hàng đã chọn
+        min_price=min_price,           # Truyền lại giá tối thiểu
+        max_price=max_price,           # Truyền lại giá tối đa
+        sort_order=sort_order          # Truyền lại thứ tự sắp xếp
     )
+
 
 # Thêm route cho thông tin cá nhân
 @views.route('/info_user')

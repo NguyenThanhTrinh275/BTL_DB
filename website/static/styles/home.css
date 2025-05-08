@@ -89,15 +89,23 @@
 
 .product-card img {
     width: 100%;
-    height: auto;
+    height: 200px;
+    object-fit: cover;
     border-radius: 8px;
 }
+
 .product-card h3 {
     font-size: 16px;
     font-weight: bold;
     margin: 8px 0;
     color: #1d4ed8;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
+
 .product-card p {
     margin: 4px 0;
 }

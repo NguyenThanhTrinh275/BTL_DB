@@ -20,39 +20,19 @@ extra_css %}
         <table class="products-table">
             <thead>
                 <tr>
-<<<<<<< HEAD
-                    <th style="width: 15%">Hình Ảnh</th>
-                    <th style="width: 13%">Tên Sản Phẩm</th>
-                    <th style="width: 13%">Màu Sắc</th>
-                    <th style="width: 13%">Size</th>
-                    <th style="width: 12%">Số Lượng</th>
-                    <th style="width: 12%">Giá</th>
-                    <th style="width: 22%">Hành Động</th>
-=======
-                    <th style="width: 15%;">Tên Sản Phẩm</th>
-                    <th style="width: 15%;">Màu Sắc</th>
-                    <th style="width: 15%;">Size</th>
-                    <th style="width: 15%;">Số Lượng</th>
-                    <th style="width: 15%;">Giá</th>
-                    <th style="width: 25%;">Hành Động</th>
->>>>>>> 7b06ad795e10ba3fd1d9b27f9b4b82bd3e3928dc
+                    <th style="width: 15%">Tên Sản Phẩm</th>
+                    <th style="width: 15%">Màu Sắc</th>
+                    <th style="width: 15%">Size</th>
+                    <th style="width: 15%">Số Lượng</th>
+                    <th style="width: 15%">Giá</th>
+                    <th style="width: 25%">Hành Động</th>
                 </tr>
             </thead>
             <tbody>
                 {% if products and products|length > 0 %} {% for product in
                 products %}
                 <tr>
-<<<<<<< HEAD
-                    <td>
-                        <img
-                            src="{{ product.image }}"
-                            id="product_image_{{ product.product_id }}"
-                        />
-                    </td>
-                    <td>{{ product.name }}</td>
-=======
                     <td>{{ product['name'] }}</td>
->>>>>>> 7b06ad795e10ba3fd1d9b27f9b4b82bd3e3928dc
                     <td>
                         <select
                             name="color"
@@ -119,6 +99,12 @@ extra_css %}
             </tbody>
         </table>
         <tfoot>
+            <tr>
+                <!-- colspan=5 để gộp các cột hình, tên, giá, màu, số lượng -->
+                <td colspan="5" class="text-right font-semibold">
+                    {{ shop['shop_name'] }} -
+                </td>
+            </tr>
             <tr>
                 <!-- colspan=5 để gộp các cột hình, tên, giá, màu, số lượng -->
                 <td colspan="5" class="text-right font-semibold">Doanh thu:</td>

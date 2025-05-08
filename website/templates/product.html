@@ -25,6 +25,7 @@ block extra_css %}
                 <div class="main-image-container">
                     <img
                         src="{{ product.images[0] or url_for('static', filename='images/default.png') }}"
+                        onerror="this.src='{{ url_for('static', filename='images/default.png') }}'"
                         alt="{{ product.name }}"
                         class="main-image"
                         id="main-image"
@@ -34,6 +35,7 @@ block extra_css %}
                     {% for image in product.images %}
                     <img
                         src="{{ image or url_for('static', filename='images/default.png') }}"
+                        onerror="this.src='{{ url_for('static', filename='images/default.png') }}'"
                         alt="{{ product.name }} View"
                         class="thumbnail"
                     />

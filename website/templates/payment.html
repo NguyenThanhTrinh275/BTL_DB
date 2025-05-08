@@ -105,6 +105,7 @@ extra_css %}
                                         <img
                                             src="{{ item.image or url_for('static', filename='images/default.png') }}"
                                             alt="{{ item.name }}"
+                                            onerror="this.src='{{ url_for('static', filename='images/default.png') }}'"
                                             class="w-16 h-16 mr-4 rounded object-cover"
                                         />
                                         <div>
